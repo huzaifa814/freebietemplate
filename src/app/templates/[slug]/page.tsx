@@ -52,34 +52,63 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
           <span className="text-gray-700 dark:text-gray-300">{t.title}</span>
         </nav>
 
-        <div className="flex items-start gap-4 mb-6">
-          <div className="text-5xl">{t.icon}</div>
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">{t.title}</h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">{t.description}</p>
+        <div className="grid gap-8 md:grid-cols-2 mb-10">
+          {/* Left: Preview image */}
+          <div className="relative">
+            <div className="sticky top-24 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800 bg-white shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/previews/${t.slug}.png`}
+                alt={`Preview of ${t.title}`}
+                width={800}
+                height={1035}
+                className="w-full h-auto block"
+                loading="eager"
+              />
+            </div>
+            <div className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
+              Preview — your downloaded file is fully editable.
+            </div>
           </div>
-        </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm font-medium mb-8">
-          💰 Free — sells for {t.etsyPrice} on Etsy
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 mb-10">
-          {t.files.filter((f) => !f.href.includes('PLACEHOLDER_')).map((f) => (
-            <a
-              key={f.href}
-              href={f.href}
-              target={f.format === 'gdocs' || f.format === 'gsheets' ? '_blank' : undefined}
-              rel="noopener noreferrer"
-              className="group flex items-center justify-between p-4 rounded-xl border-2 border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition"
-            >
-              <div>
-                <div className="font-semibold mb-1">{f.label}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{formatLabel[f.format] || f.format}</div>
+          {/* Right: Title, badge, download buttons */}
+          <div>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="text-4xl">{t.icon}</div>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
+                <p className="text-base text-gray-600 dark:text-gray-400">{t.description}</p>
               </div>
-              <span className="text-2xl group-hover:translate-x-1 transition" style={{ color: siteConfig.brandColor }}>→</span>
-            </a>
-          ))}
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm font-medium mb-6">
+              💰 Free — sells for {t.etsyPrice} on Etsy
+            </div>
+
+            <div className="grid gap-3 mb-6">
+              {t.files.filter((f) => !f.href.includes('PLACEHOLDER_')).map((f) => (
+                <a
+                  key={f.href}
+                  href={f.href}
+                  target={f.format === 'gdocs' || f.format === 'gsheets' ? '_blank' : undefined}
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-between p-4 rounded-xl border-2 border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition"
+                >
+                  <div>
+                    <div className="font-semibold mb-1">{f.label}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{formatLabel[f.format] || f.format}</div>
+                  </div>
+                  <span className="text-2xl group-hover:translate-x-1 transition" style={{ color: siteConfig.brandColor }}>→</span>
+                </a>
+              ))}
+            </div>
+
+            <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              {t.features.map((f) => (
+                <li key={f} className="flex items-start gap-2"><span className="text-green-500 font-bold mt-0.5">✓</span><span>{f}</span></li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <AdSlot />
@@ -87,13 +116,6 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
         <section className="prose dark:prose-invert max-w-none mb-10">
           <h2 className="text-2xl font-bold mb-3">About this template</h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{t.longDescription}</p>
-
-          <h2 className="text-2xl font-bold mt-8 mb-3">What&apos;s included</h2>
-          <ul className="space-y-2 text-gray-700 dark:text-gray-300">
-            {t.features.map((f) => (
-              <li key={f} className="flex items-start gap-2"><span className="text-green-500 font-bold mt-0.5">✓</span><span>{f}</span></li>
-            ))}
-          </ul>
 
           <h2 className="text-2xl font-bold mt-8 mb-3">How to use it</h2>
           <ol className="space-y-2 text-gray-700 dark:text-gray-300 list-decimal pl-6">
@@ -111,9 +133,12 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
             <h2 className="text-2xl font-bold mb-6">More {cat?.title}</h2>
             <div className="grid gap-4 sm:grid-cols-3">
               {related.map((r) => (
-                <Link key={r.slug} href={`/templates/${r.slug}`} className="group p-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-amber-500 transition">
-                  <div className="text-2xl mb-2">{r.icon}</div>
-                  <h3 className="font-semibold text-sm group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">{r.title}</h3>
+                <Link key={r.slug} href={`/templates/${r.slug}`} className="group rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-amber-500 hover:shadow-md transition overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/previews/${r.slug}.png`} alt={r.title} className="w-full aspect-[800/1035] object-cover object-top bg-white" loading="lazy" />
+                  <div className="p-3">
+                    <h3 className="font-semibold text-sm group-hover:text-amber-600 dark:group-hover:text-amber-400 transition line-clamp-2">{r.title}</h3>
+                  </div>
                 </Link>
               ))}
             </div>
