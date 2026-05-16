@@ -84,6 +84,7 @@ export function ResumeEditor() {
               <BulletList
                 bullets={job.bullets}
                 onChange={(b) => update('experience', data.experience.map((j, ji) => ji === i ? { ...j, bullets: b } : j))}
+                role={job.title || data.title}
               />
               <button onClick={() => update('experience', data.experience.filter((_, ji) => ji !== i))} className="text-xs text-red-600 hover:underline">Remove job</button>
             </div>
@@ -188,10 +189,35 @@ function Textarea({ value, onChange, rows = 3, placeholder }: { value: string; o
   );
 }
 
-function BulletList({ bullets, onChange }: { bullets: string[]; onChange: (b: string[]) => void }) {
+function BulletList({ bullets, onChange, role }: { bullets: string[]; onChange: (b: string[]) => void; role?: string }) {
+  const [busyIdx, setBusyIdx] = useState<number | null>(null);
+
+  async function rewrite(idx: number) {
+    const bullet = bullets[idx]?.trim();
+    if (!bullet) return;
+    setBusyIdx(idx);
+    try {
+      const resp = await fetch('https://templateshed-api.huzaifaa4.workers.dev/rewrite', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ bullet, role }),
+      });
+      const data = await resp.json();
+      if (data.improved && typeof data.improved === 'string') {
+        onChange(bullets.map((b, bi) => bi === idx ? data.improved : b));
+      } else {
+        alert(data.error || 'Rewrite failed. Try again.');
+      }
+    } catch {
+      alert('Could not reach the rewriter. Check your connection.');
+    } finally {
+      setBusyIdx(null);
+    }
+  }
+
   return (
     <div className="space-y-1">
-      <div className="text-xs text-gray-500 dark:text-gray-400">Bullet points</div>
+      <div className="text-xs text-gray-500 dark:text-gray-400">Bullet points · Click ✨ to improve with AI</div>
       {bullets.map((b, i) => (
         <div key={i} className="flex gap-1">
           <textarea
@@ -200,10 +226,21 @@ function BulletList({ bullets, onChange }: { bullets: string[]; onChange: (b: st
             rows={2}
             className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:border-amber-500 resize-y"
           />
-          <button onClick={() => onChange(bullets.filter((_, bi) => bi !== i))} className="px-2 text-red-600 hover:bg-red-50 rounded">×</button>
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() => rewrite(i)}
+              disabled={busyIdx !== null || !b.trim()}
+              title="Improve this bullet with AI"
+              className="px-2 py-1 text-xs rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {busyIdx === i ? '…' : '✨'}
+            </button>
+            <button type="button" onClick={() => onChange(bullets.filter((_, bi) => bi !== i))} className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs">×</button>
+          </div>
         </div>
       ))}
-      <button onClick={() => onChange([...bullets, ''])} className="text-xs text-amber-600 hover:underline">+ Add bullet</button>
+      <button type="button" onClick={() => onChange([...bullets, ''])} className="text-xs text-amber-600 hover:underline">+ Add bullet</button>
     </div>
   );
 }
