@@ -32,6 +32,8 @@ const formatLabel: Record<string, string> = {
   html: 'HTML',
 };
 
+const EDITABLE_SLUGS = new Set(['minimalist-resume']);
+
 export default async function TemplatePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = getTemplate(slug);
@@ -84,6 +86,23 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm font-medium mb-6">
               💰 Free — sells for {t.etsyPrice} on Etsy
             </div>
+
+            {EDITABLE_SLUGS.has(t.slug) && (
+              <Link
+                href={`/templates/${t.slug}/edit`}
+                className="flex items-center justify-between mb-6 p-4 rounded-xl text-white font-semibold transition hover:opacity-90 shadow-md"
+                style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-2xl">✏️</span>
+                  <span>
+                    <div className="text-base">Edit in your browser</div>
+                    <div className="text-xs font-normal opacity-90">Type, see live preview, download as PDF or Word</div>
+                  </span>
+                </span>
+                <span className="text-2xl">→</span>
+              </Link>
+            )}
 
             <div className="grid gap-3 mb-6">
               {t.files.filter((f) => !f.href.includes('PLACEHOLDER_')).map((f) => (
