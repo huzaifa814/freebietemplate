@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ResumeData, sampleResume } from '@/lib/resumeSchema';
 import { ResumePreview } from './ResumePreview';
+import { ModernTwoColumnPreview } from './ModernTwoColumnPreview';
 import { exportElementToPDF, exportResumeToDocx } from '@/lib/exporters';
 
-const STORAGE_KEY = 'freebietemplate.resume.minimalist';
+export type ResumeLayout = 'minimalist' | 'two-column';
 
-export function ResumeEditor() {
+export function ResumeEditor({ layout = 'minimalist' }: { layout?: ResumeLayout }) {
+  const STORAGE_KEY = `freebietemplate.resume.${layout}`;
   const [data, setData] = useState<ResumeData>(sampleResume);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<null | 'pdf' | 'docx'>(null);
@@ -141,7 +143,10 @@ export function ResumeEditor() {
       {/* Right: live preview */}
       <div className="overflow-auto rounded-2xl border border-gray-200 dark:border-slate-800 bg-gray-100 dark:bg-slate-900 p-6">
         <div className="mx-auto shadow-lg" style={{ maxWidth: '816px', transform: 'scale(1)', transformOrigin: 'top center' }}>
-          <ResumePreview data={data} innerRef={previewRef} />
+          {layout === 'two-column'
+            ? <ModernTwoColumnPreview data={data} innerRef={previewRef} />
+            : <ResumePreview data={data} innerRef={previewRef} />
+          }
         </div>
       </div>
     </div>

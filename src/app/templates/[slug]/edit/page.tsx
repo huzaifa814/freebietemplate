@@ -2,12 +2,16 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { ResumeEditor } from '@/components/editor/ResumeEditor';
+import { ResumeEditor, ResumeLayout } from '@/components/editor/ResumeEditor';
 import { getTemplate } from '@/config/templates';
 import { siteConfig } from '@/config/site';
 
-// Slugs that support the in-browser editor. Add to this list as new editors are wired up.
-const EDITABLE_SLUGS = ['minimalist-resume'];
+// Slugs that support the in-browser editor + which layout each uses.
+const EDITOR_CONFIG: Record<string, { layout: ResumeLayout }> = {
+  'minimalist-resume': { layout: 'minimalist' },
+  'modern-two-column-resume': { layout: 'two-column' },
+};
+const EDITABLE_SLUGS = Object.keys(EDITOR_CONFIG);
 
 export const dynamicParams = false;
 
@@ -31,6 +35,7 @@ export default async function EditPage({ params }: { params: Promise<{ slug: str
   if (!EDITABLE_SLUGS.includes(slug)) return notFound();
   const t = getTemplate(slug);
   if (!t) return notFound();
+  const { layout } = EDITOR_CONFIG[slug];
 
   return (
     <>
@@ -54,7 +59,7 @@ export default async function EditPage({ params }: { params: Promise<{ slug: str
           <Link href={`/templates/${t.slug}`} className="text-sm font-medium text-amber-600 hover:underline">← Back to template</Link>
         </div>
 
-        <ResumeEditor />
+        <ResumeEditor layout={layout} />
       </main>
       <Footer />
     </>
