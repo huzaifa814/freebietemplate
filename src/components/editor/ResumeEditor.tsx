@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ResumeData, sampleResume } from '@/lib/resumeSchema';
 import { ResumePreview } from './ResumePreview';
 import { ModernTwoColumnPreview } from './ModernTwoColumnPreview';
-import { exportElementToPDF, exportResumeToDocx } from '@/lib/exporters';
+import { exportElementToPDF, exportResumeToDocx, buildResumeDocxBlob } from '@/lib/exporters';
+import { SignInBadge, DriveSaveButton } from './SignInAndDrive';
 
 export type ResumeLayout = 'minimalist' | 'two-column';
 
@@ -120,22 +121,31 @@ export function ResumeEditor({ layout = 'minimalist' }: { layout?: ResumeLayout 
           />
         </FieldGroup>
 
-        <div className="grid grid-cols-2 gap-2 pt-2 sticky bottom-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur pb-2 -mx-2 px-2 border-t border-gray-200 dark:border-slate-800">
-          <button
-            onClick={onDownloadPDF}
+        <div className="space-y-2 pt-2 sticky bottom-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur pb-2 -mx-2 px-2 border-t border-gray-200 dark:border-slate-800">
+          <div className="flex justify-end"><SignInBadge /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={onDownloadPDF}
+              disabled={busy !== null}
+              className="px-4 py-3 rounded-lg text-white font-semibold disabled:opacity-50 transition"
+              style={{ background: '#f59e0b' }}
+            >
+              {busy === 'pdf' ? 'Generating…' : '⬇ Download PDF'}
+            </button>
+            <button
+              onClick={onDownloadDOCX}
+              disabled={busy !== null}
+              className="px-4 py-3 rounded-lg border-2 border-amber-500 text-amber-600 font-semibold disabled:opacity-50 transition hover:bg-amber-50 dark:hover:bg-amber-500/10"
+            >
+              {busy === 'docx' ? 'Generating…' : '⬇ Download Word'}
+            </button>
+          </div>
+          <DriveSaveButton
+            getBlob={() => buildResumeDocxBlob(data)}
+            filename={`${filenameBase}.docx`}
+            mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             disabled={busy !== null}
-            className="px-4 py-3 rounded-lg text-white font-semibold disabled:opacity-50 transition"
-            style={{ background: '#f59e0b' }}
-          >
-            {busy === 'pdf' ? 'Generating…' : '⬇ Download PDF'}
-          </button>
-          <button
-            onClick={onDownloadDOCX}
-            disabled={busy !== null}
-            className="px-4 py-3 rounded-lg border-2 border-amber-500 text-amber-600 font-semibold disabled:opacity-50 transition hover:bg-amber-50 dark:hover:bg-amber-500/10"
-          >
-            {busy === 'docx' ? 'Generating…' : '⬇ Download Word'}
-          </button>
+          />
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2 px-1">Drafts autosave to this browser. Clear browser data to wipe.</p>
       </div>

@@ -10,6 +10,10 @@ export const siteConfig = {
   brandColor: '#f59e0b',
   brandColorDark: '#d97706',
   adsense: { clientId: 'ca-pub-6457134505694533' },
+  // Paste the OAuth Web client ID here after creating it in GCP console.
+  // Until set, Sign-In with Google and Save-to-Drive buttons stay hidden.
+  // Get it from: https://console.cloud.google.com/auth/clients (Web application client)
+  googleClientId: '',
   keywords: [
     'free resume template', 'free bookkeeping template', 'free invoice template',
     'free budget template', 'free planner template', 'free excel template',

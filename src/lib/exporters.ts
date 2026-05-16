@@ -37,10 +37,22 @@ export async function exportElementToPDF(el: HTMLElement, filename: string) {
   pdf.save(filename);
 }
 
+/** Build a .docx Blob from resume data — used by both download and Drive save. */
+export async function buildResumeDocxBlob(data: ResumeData): Promise<Blob> {
+  const doc = await assembleResumeDocxDocument(data);
+  const docx = await import('docx');
+  return docx.Packer.toBlob(doc);
+}
+
 /** Build a .docx Word document from resume data and trigger download. */
 export async function exportResumeToDocx(data: ResumeData, filename: string) {
+  const blob = await buildResumeDocxBlob(data);
+  triggerDownload(blob, filename);
+}
+
+async function assembleResumeDocxDocument(data: ResumeData) {
   const docx = await import('docx');
-  const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
+  const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
 
   const P = (text: string, opts: { bold?: boolean; italics?: boolean; color?: string; size?: number; align?: 'center' | 'left' | 'right'; after?: number } = {}) =>
     new Paragraph({
@@ -120,13 +132,11 @@ export async function exportResumeToDocx(data: ResumeData, filename: string) {
     children.push(P(data.skills.filter(Boolean).join('  ·  ')));
   }
 
-  const doc = new Document({
+  return new Document({
     creator: 'FreebieTemplate',
     title: data.name + ' Resume',
     sections: [{ children }],
   });
-  const blob = await Packer.toBlob(doc);
-  triggerDownload(blob, filename);
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -138,9 +148,20 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function exportCoverLetterToDocx(data: CoverLetterData, filename: string) {
+export async function buildCoverLetterDocxBlob(data: CoverLetterData): Promise<Blob> {
+  const doc = await assembleCoverLetterDocument(data);
   const docx = await import('docx');
-  const { Document, Packer, Paragraph, TextRun, AlignmentType } = docx;
+  return docx.Packer.toBlob(doc);
+}
+
+export async function exportCoverLetterToDocx(data: CoverLetterData, filename: string) {
+  const blob = await buildCoverLetterDocxBlob(data);
+  triggerDownload(blob, filename);
+}
+
+async function assembleCoverLetterDocument(data: CoverLetterData) {
+  const docx = await import('docx');
+  const { Document, Paragraph, TextRun, AlignmentType } = docx;
 
   const P = (text: string, opts: { bold?: boolean; italics?: boolean; color?: string; size?: number; after?: number; align?: 'left' | 'right' } = {}) =>
     new Paragraph({
@@ -177,11 +198,9 @@ export async function exportCoverLetterToDocx(data: CoverLetterData, filename: s
   children.push(P(data.closing || 'Sincerely,', { after: 480 }));
   children.push(P(data.senderName, { italics: true, size: 28 }));
 
-  const doc = new Document({
+  return new Document({
     creator: 'FreebieTemplate',
     title: `${data.senderName} Cover Letter`,
     sections: [{ children }],
   });
-  const blob = await Packer.toBlob(doc);
-  triggerDownload(blob, filename);
 }

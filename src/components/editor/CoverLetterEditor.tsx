@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CoverLetterData, sampleCoverLetter } from '@/lib/coverLetterSchema';
 import { CoverLetterPreview } from './CoverLetterPreview';
-import { exportElementToPDF, exportCoverLetterToDocx } from '@/lib/exporters';
+import { exportElementToPDF, exportCoverLetterToDocx, buildCoverLetterDocxBlob } from '@/lib/exporters';
+import { SignInBadge, DriveSaveButton } from './SignInAndDrive';
 
 const STORAGE_KEY = 'freebietemplate.cover-letter';
 
@@ -126,13 +127,22 @@ export function CoverLetterEditor() {
           <Input label="Closing phrase" value={data.closing} onChange={(v) => update('closing', v)} placeholder="Sincerely," />
         </Group>
 
-        <div className="grid grid-cols-2 gap-2 pt-2 sticky bottom-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur pb-2 -mx-2 px-2 border-t border-gray-200 dark:border-slate-800">
-          <button onClick={onDownloadPDF} disabled={busy !== null} className="px-4 py-3 rounded-lg text-white font-semibold disabled:opacity-50 transition" style={{ background: '#f59e0b' }}>
-            {busy === 'pdf' ? 'Generating…' : '⬇ Download PDF'}
-          </button>
-          <button onClick={onDownloadDOCX} disabled={busy !== null} className="px-4 py-3 rounded-lg border-2 border-amber-500 text-amber-600 font-semibold disabled:opacity-50 transition hover:bg-amber-50 dark:hover:bg-amber-500/10">
-            {busy === 'docx' ? 'Generating…' : '⬇ Download Word'}
-          </button>
+        <div className="space-y-2 pt-2 sticky bottom-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur pb-2 -mx-2 px-2 border-t border-gray-200 dark:border-slate-800">
+          <div className="flex justify-end"><SignInBadge /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={onDownloadPDF} disabled={busy !== null} className="px-4 py-3 rounded-lg text-white font-semibold disabled:opacity-50 transition" style={{ background: '#f59e0b' }}>
+              {busy === 'pdf' ? 'Generating…' : '⬇ Download PDF'}
+            </button>
+            <button onClick={onDownloadDOCX} disabled={busy !== null} className="px-4 py-3 rounded-lg border-2 border-amber-500 text-amber-600 font-semibold disabled:opacity-50 transition hover:bg-amber-50 dark:hover:bg-amber-500/10">
+              {busy === 'docx' ? 'Generating…' : '⬇ Download Word'}
+            </button>
+          </div>
+          <DriveSaveButton
+            getBlob={() => buildCoverLetterDocxBlob(data)}
+            filename={`${filenameBase}.docx`}
+            mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            disabled={busy !== null}
+          />
         </div>
       </div>
 
