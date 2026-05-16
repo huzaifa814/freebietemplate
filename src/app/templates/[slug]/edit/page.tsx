@@ -3,13 +3,18 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ResumeEditor, ResumeLayout } from '@/components/editor/ResumeEditor';
+import { CoverLetterEditor } from '@/components/editor/CoverLetterEditor';
 import { getTemplate } from '@/config/templates';
 import { siteConfig } from '@/config/site';
 
-// Slugs that support the in-browser editor + which layout each uses.
-const EDITOR_CONFIG: Record<string, { layout: ResumeLayout }> = {
-  'minimalist-resume': { layout: 'minimalist' },
-  'modern-two-column-resume': { layout: 'two-column' },
+type EditorConfig =
+  | { type: 'resume'; layout: ResumeLayout }
+  | { type: 'cover-letter' };
+
+const EDITOR_CONFIG: Record<string, EditorConfig> = {
+  'minimalist-resume': { type: 'resume', layout: 'minimalist' },
+  'modern-two-column-resume': { type: 'resume', layout: 'two-column' },
+  'cover-letter-pack': { type: 'cover-letter' },
 };
 const EDITABLE_SLUGS = Object.keys(EDITOR_CONFIG);
 
@@ -35,7 +40,7 @@ export default async function EditPage({ params }: { params: Promise<{ slug: str
   if (!EDITABLE_SLUGS.includes(slug)) return notFound();
   const t = getTemplate(slug);
   if (!t) return notFound();
-  const { layout } = EDITOR_CONFIG[slug];
+  const cfg = EDITOR_CONFIG[slug];
 
   return (
     <>
@@ -59,7 +64,7 @@ export default async function EditPage({ params }: { params: Promise<{ slug: str
           <Link href={`/templates/${t.slug}`} className="text-sm font-medium text-amber-600 hover:underline">← Back to template</Link>
         </div>
 
-        <ResumeEditor layout={layout} />
+        {cfg.type === 'resume' ? <ResumeEditor layout={cfg.layout} /> : <CoverLetterEditor />}
       </main>
       <Footer />
     </>

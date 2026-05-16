@@ -1,4 +1,5 @@
 import type { ResumeData } from './resumeSchema';
+import type { CoverLetterData } from './coverLetterSchema';
 
 /** Render a DOM node to PDF using html2canvas-pro + jsPDF. Letter-size, one page. */
 export async function exportElementToPDF(el: HTMLElement, filename: string) {
@@ -125,12 +126,62 @@ export async function exportResumeToDocx(data: ResumeData, filename: string) {
     sections: [{ children }],
   });
   const blob = await Packer.toBlob(doc);
+  triggerDownload(blob, filename);
+}
 
-  // Trigger download
+function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export async function exportCoverLetterToDocx(data: CoverLetterData, filename: string) {
+  const docx = await import('docx');
+  const { Document, Packer, Paragraph, TextRun, AlignmentType } = docx;
+
+  const P = (text: string, opts: { bold?: boolean; italics?: boolean; color?: string; size?: number; after?: number; align?: 'left' | 'right' } = {}) =>
+    new Paragraph({
+      alignment: opts.align === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT,
+      spacing: { after: opts.after ?? 120 },
+      children: [new TextRun({ text, bold: opts.bold, italics: opts.italics, color: opts.color, size: opts.size })],
+    });
+
+  const children: InstanceType<typeof Paragraph>[] = [];
+
+  // Sender header
+  children.push(P(data.senderName, { bold: true, size: 32, after: 40 }));
+  if (data.senderTitle) children.push(P(data.senderTitle, { color: 'B45309', size: 22, after: 60 }));
+  children.push(P([data.senderCity, data.senderPhone, data.senderEmail].filter(Boolean).join('  ·  '), { color: '6B7280', size: 20, after: 280 }));
+
+  // Date
+  if (data.date) children.push(P(data.date, { color: '6B7280', size: 20, after: 280 }));
+
+  // Recipient
+  if (data.recipientName) children.push(P(data.recipientName, { bold: true, after: 40 }));
+  if (data.recipientTitle) children.push(P(data.recipientTitle, { color: '6B7280', after: 40 }));
+  if (data.recipientCompany) children.push(P(data.recipientCompany, { color: '6B7280', after: 40 }));
+  if (data.recipientAddress) children.push(P(data.recipientAddress, { color: '6B7280', after: 280 }));
+
+  // Greeting
+  if (data.greeting) children.push(P(data.greeting, { after: 220 }));
+
+  // Body
+  for (const para of data.paragraphs.filter(Boolean)) {
+    children.push(P(para, { after: 200 }));
+  }
+
+  // Closing
+  children.push(P(data.closing || 'Sincerely,', { after: 480 }));
+  children.push(P(data.senderName, { italics: true, size: 28 }));
+
+  const doc = new Document({
+    creator: 'FreebieTemplate',
+    title: `${data.senderName} Cover Letter`,
+    sections: [{ children }],
+  });
+  const blob = await Packer.toBlob(doc);
+  triggerDownload(blob, filename);
 }

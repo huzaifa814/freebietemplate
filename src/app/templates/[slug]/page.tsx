@@ -32,7 +32,7 @@ const formatLabel: Record<string, string> = {
   html: 'HTML',
 };
 
-const EDITABLE_SLUGS = new Set(['minimalist-resume', 'modern-two-column-resume']);
+const EDITABLE_SLUGS = new Set(['minimalist-resume', 'modern-two-column-resume', 'cover-letter-pack']);
 
 export default async function TemplatePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
