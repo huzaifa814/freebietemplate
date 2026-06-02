@@ -29,3 +29,14 @@ body {
 
 a { color: inherit; text-decoration: none; }
 * { box-sizing: border-box; }
+
+/* Calendar sheets always render light, with backgrounds preserved when printing. */
+.cal-sheet, .cal-sheet * {
+  color: #1f2937;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cal-sheet { background: #fff !important; }
+@media print {
+  html, body { background: #fff !important; }
+}

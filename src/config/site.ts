@@ -26,6 +26,7 @@ export const navConfig = {
   main: [
     { title: 'Home', href: '/' },
     { title: 'Templates', href: '/templates' },
+    { title: 'Calendars', href: '/calendars' },
     { title: 'Categories', href: '/categories' },
     { title: 'Guides', href: '/guides' },
     { title: 'FAQ', href: '/faq' },
