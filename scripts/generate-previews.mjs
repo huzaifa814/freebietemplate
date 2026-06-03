@@ -25,7 +25,7 @@ const SOFT = '#f9fafb';
 
 // ---- Catalog ----
 const catalogSrc = fs.readFileSync(path.join(root, 'src/config/templates.ts'), 'utf8');
-const entryRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email)',/g;
+const entryRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health)',/g;
 const entries = [];
 for (const m of catalogSrc.matchAll(entryRe)) {
   entries.push({ slug: m[1], title: m[2], description: m[3], category: m[4] });
@@ -2031,6 +2031,49 @@ function renderEmailCat(ctx, entry) {
   return SIG_ROUND[idx % SIG_ROUND.length](ctx, entry, accent);
 }
 
+// ============================================================
+//  Checklist / Finance / Wedding / Health previews
+//  Reuse the planner building blocks with category-specific
+//  accent rotations + keyword routing so each looks distinct.
+// ============================================================
+const CHK_ORDER = entries.filter((e) => e.category === 'checklist').map((e) => e.slug);
+function renderChecklist(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, CHK_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 6) % BK_ACCENTS.length];
+  if (/grocery|shopping/.test(s)) return plMeal(ctx, entry, accent);
+  if (/routine|daily/.test(s)) return plDaily(ctx, entry, accent);
+  if (/baby|household-binder|home-buyer|event-planning|back-to-school/.test(s)) return plMonth(ctx, entry, accent);
+  return plChecklist(ctx, entry, accent);
+}
+
+const FIN_ORDER = entries.filter((e) => e.category === 'finance').map((e) => e.slug);
+function renderFinance(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, FIN_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 7) % BK_ACCENTS.length];
+  if (/budget|paycheck|50-30-20/.test(s)) return plBudget(ctx, entry, accent);
+  if (/debt|net-worth|savings|emergency-fund|goals|sinking/.test(s)) return plLog(ctx, entry, accent);
+  if (/bill-payment|subscription|no-spend/.test(s)) return plMonth(ctx, entry, accent);
+  return plBudget(ctx, entry, accent);
+}
+
+const WED_ORDER = entries.filter((e) => e.category === 'wedding').map((e) => e.slug);
+function renderWedding(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, WED_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 8) % BK_ACCENTS.length];
+  if (/budget|meal/.test(s)) return plBudget(ctx, entry, accent);
+  if (/guest-list|rsvp|vendor/.test(s)) return plLog(ctx, entry, accent);
+  if (/timeline|day/.test(s)) return plDaily(ctx, entry, accent);
+  if (/checklist|registry|vows/.test(s)) return plChecklist(ctx, entry, accent);
+  return plMonth(ctx, entry, accent);
+}
+
+const HLT_ORDER = entries.filter((e) => e.category === 'health').map((e) => e.slug);
+function renderHealth(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, HLT_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 9) % BK_ACCENTS.length];
+  if (/meal/.test(s)) return plMeal(ctx, entry, accent);
+  if (/workout-planner|fitness-goal/.test(s)) return plWeekly(ctx, entry, accent);
+  if (/self-care|medication/.test(s)) return plChecklist(ctx, entry, accent);
+  if (/water|sleep|step|food-diary/.test(s)) return plMonth(ctx, entry, accent);
+  return plLog(ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -2052,6 +2095,10 @@ function render(entry) {
   } else if (entry.category === 'education') {
     renderEducationCat(ctx, entry);
   } else if (entry.category === 'email') renderEmailCat(ctx, entry);
+  else if (entry.category === 'checklist') renderChecklist(ctx, entry);
+  else if (entry.category === 'finance') renderFinance(ctx, entry);
+  else if (entry.category === 'wedding') renderWedding(ctx, entry);
+  else if (entry.category === 'health') renderHealth(ctx, entry);
   else renderBusinessDoc(ctx, entry);
 
   return canvas.encode('png');

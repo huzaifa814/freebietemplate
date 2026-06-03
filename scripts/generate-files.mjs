@@ -18,7 +18,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 // Extract { slug, helper, category } triples from the catalog source.
 const catalogSrc = fs.readFileSync(path.join(root, 'src/config/templates.ts'), 'utf8');
-const entryRe = /t\('([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email)',[\s\S]*?(xlsxFiles|docxFiles|pdfFiles|emailSigFiles)\(/g;
+const entryRe = /t\('([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health)',[\s\S]*?(xlsxFiles|docxFiles|pdfFiles|emailSigFiles)\(/g;
 const entries = [];
 for (const m of catalogSrc.matchAll(entryRe)) {
   entries.push({ slug: m[1], title: m[2], category: m[3], helper: m[4] });
@@ -62,6 +62,7 @@ async function buildXlsx(entry) {
   else if (cat === 'planner') buildPlannerXlsx(wb, entry);
   else if (cat === 'business') buildBusinessXlsx(wb, entry);
   else if (cat === 'education') buildEducationXlsx(wb, entry);
+  else if (cat === 'finance' || cat === 'wedding' || cat === 'health') buildPlannerXlsx(wb, entry);
   else buildGenericXlsx(wb, entry);
 
   const file = path.join(outDir, `${entry.slug}.xlsx`);
