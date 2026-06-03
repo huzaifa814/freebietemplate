@@ -1645,6 +1645,111 @@ function renderInvoiceCat(ctx, entry) {
   return INV_DESIGNS[idx % INV_DESIGNS.length](ctx, entry, p, accent);
 }
 
+// ============================================================
+//  Planner & tracker previews — distinct printable layouts
+// ============================================================
+function checkbox(ctx, x, y, on, color) {
+  rrect(ctx, x, y, 16, 16, 4, on ? color : '#ffffff', on ? color : '#cbd5e1');
+  if (on) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 4, y + 8.5); ctx.lineTo(x + 7, y + 11.5); ctx.lineTo(x + 12, y + 5); ctx.stroke(); }
+}
+function ruledLines(ctx, x, y, w, n, gap) { for (let i = 0; i < n; i++) rule(ctx, x, y + i * gap, x + w, '#e9edf1', 1); }
+function plFoot(ctx) { text(ctx, 'FREE printable  ·  Letter + A4  ·  Fill in & print', W / 2, H - 18, { size: 13, color: MUTED, align: 'center' }); watermark(ctx); }
+function plHead(ctx, entry, accent, sub) { box(ctx, 0, 0, W, 84, accent[0]); text(ctx, entry.title, 36, sub ? 42 : 50, { size: 25, weight: '800', color: '#fff' }); if (sub) text(ctx, sub, 36, 68, { size: 13, color: '#ffffffdd' }); }
+
+function plDaily(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Date  ____ / ____ / ______');
+  const hours = ['6 AM', '7', '8', '9', '10', '11', '12 PM', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  text(ctx, 'SCHEDULE', 40, 128, { size: 12, weight: '800', color: accent[0] });
+  hours.forEach((h, i) => { const y = 148 + i * 46; text(ctx, h, 40, y + 26, { size: 11, color: MUTED }); rule(ctx, 92, y, 440, '#eef0f2', 1); });
+  rule(ctx, 92, 148 + 16 * 46, 440, '#eef0f2', 1);
+  const rx = 470, rw = W - rx - 40;
+  rrect(ctx, rx, 110, rw, 150, 12, '#fff', LINE); text(ctx, 'TOP 3 PRIORITIES', rx + 16, 136, { size: 12, weight: '800', color: accent[0] });
+  for (let i = 0; i < 3; i++) { checkbox(ctx, rx + 16, 152 + i * 32, false, accent[0]); rule(ctx, rx + 42, 178 + i * 32, rx + rw - 16, '#eef0f2', 1); }
+  rrect(ctx, rx, 278, rw, 250, 12, '#fff', LINE); text(ctx, 'TO-DO', rx + 16, 304, { size: 12, weight: '800', color: accent[0] });
+  for (let i = 0; i < 7; i++) { checkbox(ctx, rx + 16, 320 + i * 28, i < 2, accent[0]); rule(ctx, rx + 42, 344 + i * 28, rx + rw - 16, '#eef0f2', 1); }
+  rrect(ctx, rx, 546, rw, 88, 12, '#fff', LINE); text(ctx, 'WATER', rx + 16, 572, { size: 12, weight: '800', color: accent[0] });
+  for (let i = 0; i < 8; i++) { const cxp = rx + 30 + i * ((rw - 50) / 7); ctx.beginPath(); ctx.arc(cxp, 604, 11, 0, Math.PI * 2); if (i < 3) { ctx.fillStyle = accent[2]; ctx.fill(); } ctx.strokeStyle = accent[0]; ctx.lineWidth = 2; ctx.stroke(); }
+  rrect(ctx, rx, 652, rw, 286, 12, '#fff', LINE); text(ctx, 'NOTES', rx + 16, 678, { size: 12, weight: '800', color: accent[0] });
+  ruledLines(ctx, rx + 16, 704, rw - 32, 8, 28);
+  plFoot(ctx);
+}
+function plWeekly(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Week of  ________________');
+  const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  const top = 104, colW = (W - 60) / 2, rowH = (H - top - 56) / 4;
+  for (let i = 0; i < 7; i++) { const cx = 30 + (i % 2) * colW, cy = top + Math.floor(i / 2) * rowH; rrect(ctx, cx + 6, cy + 6, colW - 12, rowH - 12, 10, '#fff', LINE); rrect(ctx, cx + 6, cy + 6, colW - 12, 28, 8, accent[3]); text(ctx, days[i], cx + 20, cy + 25, { size: 12, weight: '800', color: accent[0] }); ruledLines(ctx, cx + 20, cy + 56, colW - 44, 4, 26); }
+  const cx = 30 + colW, cy = top + 3 * rowH; rrect(ctx, cx + 6, cy + 6, colW - 12, rowH - 12, 10, accent[3]); text(ctx, 'NOTES & GOALS', cx + 20, cy + 26, { size: 12, weight: '800', color: accent[0] }); ruledLines(ctx, cx + 20, cy + 56, colW - 44, 4, 26);
+  plFoot(ctx);
+}
+function plHabit(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Month  ____________');
+  const habits = ['Drink water', 'Exercise', 'Read 20 min', 'Meditate', 'No sugar', 'Journal', '8h sleep', '10k steps'];
+  const days = 16, x0 = 196, top = 134, colW = (W - x0 - 30) / days, rowH = 46;
+  for (let d = 0; d < days; d++) text(ctx, String(d + 1), x0 + d * colW + colW / 2, top - 10, { size: 9, color: MUTED, align: 'center' });
+  habits.forEach((h, r) => { const y = top + r * rowH; if (r % 2 === 1) box(ctx, 30, y - 14, W - 60, rowH, '#f9fafb'); text(ctx, h, 46, y + 6, { size: 13, weight: '600' }); for (let d = 0; d < days; d++) { const cxp = x0 + d * colW + colW / 2, on = hash(entry.slug + r + 'x' + d) % 3 === 0; ctx.beginPath(); ctx.arc(cxp, y + 2, 9, 0, Math.PI * 2); if (on) { ctx.fillStyle = accent[0]; ctx.fill(); } else { ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; ctx.stroke(); } } });
+  const sy = top + habits.length * rowH + 16; rrect(ctx, 30, sy, W - 60, 84, 12, accent[3]); text(ctx, 'Fill a circle each day you complete the habit — build the chain.', 50, sy + 34, { size: 13, weight: '600', color: accent[0] }); text(ctx, 'Best streak: 12 days     ·     This month: 78% complete', 50, sy + 60, { size: 12, color: INK });
+  plFoot(ctx);
+}
+function plMeal(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Week of  ________________');
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], meals = ['Breakfast', 'Lunch', 'Dinner'];
+  const x0 = 110, top = 134, gw = W - x0 - 210, colW = gw / 3, rowH = (H - top - 70) / 7;
+  meals.forEach((m, i) => text(ctx, m, x0 + i * colW + colW / 2, top - 8, { size: 12, weight: '700', color: accent[0], align: 'center' }));
+  days.forEach((d, r) => { const y = top + r * rowH; rrect(ctx, 30, y, x0 - 44, rowH - 8, 8, accent[3]); text(ctx, d, 30 + (x0 - 44) / 2, y + rowH / 2 - 2, { size: 13, weight: '800', color: accent[0], align: 'center' }); for (let c = 0; c < 3; c++) rrect(ctx, x0 + c * colW, y, colW - 8, rowH - 8, 8, '#fff', LINE); });
+  const gx = x0 + gw + 14, gw2 = W - gx - 30; rrect(ctx, gx, top, gw2, H - top - 80, 12, accent[0]); text(ctx, 'GROCERIES', gx + 16, top + 28, { size: 13, weight: '800', color: '#fff' });
+  for (let i = 0; i < 15; i++) { rrect(ctx, gx + 16, top + 48 + i * 30, 14, 14, 3, null, '#ffffffaa'); rule(ctx, gx + 38, top + 62 + i * 30, gx + gw2 - 16, '#ffffff55', 1); }
+  plFoot(ctx);
+}
+function plBudget(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Monthly budget overview');
+  kpiRow(ctx, 30, 102, W - 60, [{ label: 'Income', value: '$4,200', color: '#16a34a' }, { label: 'Expenses', value: '$3,140', color: '#dc2626' }, { label: 'Left to save', value: '$1,060', color: accent[0] }]);
+  text(ctx, 'Budget by category', 30, 212, { size: 14, weight: '700' });
+  drawTable(ctx, 30, 224, W - 60, ['Category', 'Budget', 'Spent', 'Left'], [['Housing', '$1,400', '$1,400', '$0'], ['Groceries', '$600', '$540', '$60'], ['Transport', '$300', '$280', '$20'], ['Utilities', '$280', '$265', '$15'], ['Fun', '$250', '$310', '−$60'], ['Savings', '$600', '$600', '$0']], { right: [1, 2, 3], colorFn: (c, i) => i === 3 ? (String(c).startsWith('−') ? '#dc2626' : '#16a34a') : INK, minRows: 7 });
+  const py = 624; rrect(ctx, 30, py, W - 60, 300, 14, '#fff', LINE); text(ctx, 'Spending breakdown', 56, py + 30, { size: 13, weight: '700' }); donut(ctx, 140, py + 165, 80, [{ label: 'Housing', v: 44, c: accent[0] }, { label: 'Food', v: 19, c: '#2563eb' }, { label: 'Transport', v: 12, c: '#f59e0b' }, { label: 'Other', v: 25, c: '#94a3b8' }]); text(ctx, 'Monthly trend', 480, py + 30, { size: 13, weight: '700' }); bars(ctx, 480, py + 58, 250, 180, [8, 9, 7, 10, 9, 11], accent[0], ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']);
+  plFoot(ctx);
+}
+function plLog(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent);
+  kpiRow(ctx, 30, 102, W - 60, [{ label: 'This week', value: '5 / 7', color: accent[0] }, { label: 'Current streak', value: '12 days', color: '#16a34a' }, { label: 'Best streak', value: '21 days', color: '#2563eb' }]);
+  text(ctx, 'Daily log', 30, 212, { size: 14, weight: '700' });
+  drawTable(ctx, 30, 224, W - 60, ['Date', 'Entry', 'Rating', 'Notes'], [['Mon', 'Logged', '4 / 5', 'Felt good'], ['Tue', 'Logged', '3 / 5', 'A bit tired'], ['Wed', 'Logged', '5 / 5', 'Great day'], ['Thu', 'Logged', '4 / 5', ''], ['Fri', 'Logged', '3 / 5', 'Busy'], ['Sat', 'Logged', '5 / 5', 'Restful']], { right: [2], minRows: 9 });
+  const py = 644; rrect(ctx, 30, py, W - 60, 280, 14, '#fff', LINE); text(ctx, '30-day trend', 56, py + 30, { size: 13, weight: '700' }); lineChart(ctx, 60, py + 64, W - 120, 170, [3, 4, 3, 5, 4, 4, 5, 4, 3, 5], accent[0]);
+  plFoot(ctx);
+}
+function plChecklist(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent);
+  const secs = [['GET READY', ['Make a plan & timeline', 'Set your budget', 'Gather what you need', 'Tell the right people']], ['THE MAIN WORK', ['Go section by section', 'Label everything clearly', 'Keep essentials handy', 'Check off as you go']], ['WRAP UP', ['Do a final walkthrough', 'Tidy up loose ends', 'Double-check the list', 'Celebrate — done!']]];
+  let y = 116;
+  secs.forEach(([title, items]) => { rrect(ctx, 40, y, W - 80, 32, 8, accent[3]); rrect(ctx, 40, y, 5, 32, 2, accent[0]); text(ctx, title, 62, y + 21, { size: 13, weight: '800', color: accent[0] }); y += 50; items.forEach((it) => { checkbox(ctx, 56, y - 12, false, accent[0]); text(ctx, it, 86, y, { size: 13.5, color: '#374151' }); rule(ctx, 86, y + 18, W - 60, '#eef0f2', 1); y += 44; }); y += 18; });
+  plFoot(ctx);
+}
+function plMonth(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Month  ________________');
+  const gw = 540, x = 30, top = 116, labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], colW = gw / 7;
+  rrect(ctx, x, top, gw, 28, 6, accent[0]); labels.forEach((d, i) => text(ctx, d, x + i * colW + colW / 2, top + 19, { size: 11, weight: '700', color: '#fff', align: 'center' }));
+  const rows = 5, cellH = (H - top - 28 - 80) / rows;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < 7; c++) { const cx = x + c * colW, cy = top + 28 + r * cellH; box(ctx, cx, cy, colW, cellH, (c === 0 || c === 6) ? '#fafafa' : '#fff', '#e5e7eb'); rrect(ctx, cx + 5, cy + 5, 16, 13, 3, null, '#dde1e6'); }
+  const sx = x + gw + 16, sw = W - sx - 30;
+  rrect(ctx, sx, top, sw, 176, 12, '#fff', LINE); text(ctx, 'GOALS', sx + 16, top + 26, { size: 12, weight: '800', color: accent[0] }); for (let i = 0; i < 5; i++) { checkbox(ctx, sx + 16, top + 40 + i * 28, false, accent[0]); rule(ctx, sx + 40, top + 62 + i * 28, sx + sw - 16, '#eef0f2', 1); }
+  rrect(ctx, sx, top + 192, sw, 176, 12, '#fff', LINE); text(ctx, "THIS MONTH'S FOCUS", sx + 16, top + 218, { size: 12, weight: '800', color: accent[0] }); ruledLines(ctx, sx + 16, top + 240, sw - 32, 5, 28);
+  rrect(ctx, sx, top + 384, sw, H - top - 384 - 80, 12, '#fff', LINE); text(ctx, 'NOTES', sx + 16, top + 410, { size: 12, weight: '800', color: accent[0] }); ruledLines(ctx, sx + 16, top + 432, sw - 32, 6, 28);
+  plFoot(ctx);
+}
+const PL_ROUND = [plDaily, plWeekly, plChecklist, plLog, plMonth];
+const PL_ORDER = entries.filter((e) => e.category === 'planner').map((e) => e.slug);
+function renderPlanner(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, PL_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 4) % BK_ACCENTS.length];
+  if (/daily-planner/.test(s)) return plDaily(ctx, entry, accent);
+  if (/weekly-planner|weekly-todo|content-calendar/.test(s)) return plWeekly(ctx, entry, accent);
+  if (/habit/.test(s)) return plHabit(ctx, entry, accent);
+  if (/meal/.test(s)) return plMeal(ctx, entry, accent);
+  if (/budget|money|saving|debt|sinking|expense|bill-payment/.test(s)) return plBudget(ctx, entry, accent);
+  if (/checklist|packing|grocery|brain-dump|cleaning|moving|declutter|shower/.test(s)) return plChecklist(ctx, entry, accent);
+  if (/monthly|family-calendar|christmas|yearly|birthday|party|garden|renovation|travel|road-trip|homeschool|study|academic|wedding|self-care|pregnancy/.test(s)) return plMonth(ctx, entry, accent);
+  if (/tracker|log|journal|mood|sleep|water|medication|reading|workout|fasting|period|prayer|gratitude|dog|baby|newborn|potty|chore|password|goal|project/.test(s)) return plLog(ctx, entry, accent);
+  return PL_ROUND[idx % PL_ROUND.length](ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -1659,12 +1764,7 @@ function render(entry) {
   } else if (entry.category === 'invoice') {
     renderInvoiceCat(ctx, entry);
   } else if (entry.category === 'planner') {
-    if (/tracker|log|budget|debt|sinking|goal|saving|workout|reading|habit|fasting|water|medication|gift|mood|sleep|period|newborn|baby/i.test(entry.slug)) {
-      const headers = ['Date', 'Item', 'Status', 'Notes', 'Value'];
-      renderSpreadsheet(ctx, entry, { headers });
-    } else {
-      renderPlannerGrid(ctx, entry);
-    }
+    renderPlanner(ctx, entry);
   } else if (entry.category === 'letters') renderLetter(ctx, entry);
   else if (entry.category === 'business') {
     if (/calculator|tracker|pipeline|metric|funnel|matrix|okr/i.test(entry.slug)) {
