@@ -42,11 +42,17 @@ function GridSheet({ year, month, weekStart, paper, holidays, editable, events, 
   const weeks = monthMatrix(year, month, weekStart);
   const hol = holidays;
   const labels = weekdayLabels(weekStart, true);
+  const labelsShort = weekdayLabels(weekStart, false);
   return (
     <div className="cal-sheet bg-white text-gray-900 flex flex-col" style={{ aspectRatio: sheetAspect(paper, 'landscape') }}>
       <SheetTitle>{MONTHS[month]} {year}</SheetTitle>
-      <div className="grid grid-cols-7 text-white text-xs md:text-sm font-semibold tracking-wide" style={{ background: '#f59e0b' }}>
-        {labels.map((d) => <div key={d} className="text-center py-1.5">{d}</div>)}
+      <div className="grid grid-cols-7 text-white text-[11px] sm:text-sm font-semibold tracking-wide" style={{ background: '#f59e0b' }}>
+        {labels.map((d, i) => (
+          <div key={d} className="text-center py-1.5">
+            <span className="sm:hidden">{labelsShort[i]}</span>
+            <span className="hidden sm:inline">{d}</span>
+          </div>
+        ))}
       </div>
       <div className="grid grid-cols-7 flex-1 border-l border-t border-gray-300">
         {weeks.flat().map((day, i) => {

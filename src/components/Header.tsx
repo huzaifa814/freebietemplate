@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { siteConfig, navConfig } from '@/config/site';
+import { MobileNav } from './MobileNav';
 
 export function Header() {
   return (
@@ -21,6 +22,7 @@ export function Header() {
         <Link href="/templates" className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium text-sm hover:opacity-90 transition" style={{ background: siteConfig.brandColor }}>
           Browse Templates →
         </Link>
+        <MobileNav />
       </div>
     </header>
   );
