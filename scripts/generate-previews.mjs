@@ -25,7 +25,7 @@ const SOFT = '#f9fafb';
 
 // ---- Catalog ----
 const catalogSrc = fs.readFileSync(path.join(root, 'src/config/templates.ts'), 'utf8');
-const entryRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health)',/g;
+const entryRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social)',/g;
 const entries = [];
 for (const m of catalogSrc.matchAll(entryRe)) {
   entries.push({ slug: m[1], title: m[2], description: m[3], category: m[4] });
@@ -2074,6 +2074,69 @@ function renderHealth(ctx, entry) {
   return plLog(ctx, entry, accent);
 }
 
+// ============================================================
+//  Kids / Certificate / Social previews
+// ============================================================
+const KID_ORDER = entries.filter((e) => e.category === 'kids').map((e) => e.slug);
+function renderKids(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, KID_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 2) % BK_ACCENTS.length];
+  if (/chore|reward|sticker|behavior|potty|screen-time/.test(s)) return plHabit(ctx, entry, accent);
+  if (/allowance|savings/.test(s)) return plBudget(ctx, entry, accent);
+  if (/reading-log/.test(s)) return plLog(ctx, entry, accent);
+  if (/routine/.test(s)) return plDaily(ctx, entry, accent);
+  if (/command-center/.test(s)) return plWeekly(ctx, entry, accent);
+  return plChecklist(ctx, entry, accent);
+}
+
+// Decorative certificate — distinct from every other layout.
+function certAward(ctx, entry, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, H, accent[3]);
+  // Double border
+  ctx.strokeStyle = accent[0]; ctx.lineWidth = 6; ctx.strokeRect(40, 40, W - 80, H - 80);
+  ctx.strokeStyle = accent[1]; ctx.lineWidth = 2; ctx.strokeRect(54, 54, W - 108, H - 108);
+  // Corner flourishes
+  [[64, 64], [W - 64, 64], [64, H - 64], [W - 64, H - 64]].forEach(([cx, cy]) => { ctx.fillStyle = accent[0]; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill(); });
+  const cy = 170;
+  text(ctx, 'CERTIFICATE', W / 2, cy, { size: 44, weight: '800', align: 'center', color: accent[0] });
+  const sub = /completion/.test(entry.slug) ? 'OF COMPLETION' : /participation/.test(entry.slug) ? 'OF PARTICIPATION' : /gift/.test(entry.slug) ? 'GIFT CERTIFICATE' : 'OF ACHIEVEMENT';
+  text(ctx, sub, W / 2, cy + 36, { size: 17, weight: '700', align: 'center', color: MUTED });
+  rule(ctx, W / 2 - 70, cy + 58, W / 2 + 70, accent[0], 2);
+  text(ctx, 'This certificate is proudly presented to', W / 2, cy + 116, { size: 15, align: 'center', color: '#374151', italic: true });
+  const nm = nameFor(entry.slug);
+  text(ctx, nm.full, W / 2, cy + 176, { size: 42, align: 'center', serif: true, italic: true, color: INK });
+  rule(ctx, W / 2 - 220, cy + 196, W / 2 + 220, '#cbd5e1', 1);
+  let y = cy + 246;
+  ['in recognition of outstanding effort and dedication,', 'and for successfully meeting every requirement with', 'excellence. Awarded with sincere congratulations.'].forEach((l) => { text(ctx, l, W / 2, y, { size: 14, align: 'center', color: '#4b5563' }); y += 26; });
+  // Seal
+  const sx = W / 2, sealY = y + 70; ctx.fillStyle = accent[0]; ctx.beginPath(); ctx.arc(sx, sealY, 46, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = accent[1]; ctx.beginPath(); ctx.arc(sx, sealY, 36, 0, Math.PI * 2); ctx.fill();
+  // 5-point star (drawn, not a glyph — fonts may lack ★)
+  ctx.fillStyle = '#fff'; ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const r = i % 2 === 0 ? 20 : 8.5, a = -Math.PI / 2 + i * Math.PI / 5; const px = sx + r * Math.cos(a), py = sealY + r * Math.sin(a); i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+  ctx.closePath(); ctx.fill();
+  for (let i = 0; i < 2; i++) { ctx.fillStyle = accent[0]; ctx.beginPath(); ctx.moveTo(sx - 8, sealY + 44); ctx.lineTo(sx - 22, sealY + 92 + i); ctx.lineTo(sx - 2, sealY + 78); ctx.fill(); ctx.beginPath(); ctx.moveTo(sx + 8, sealY + 44); ctx.lineTo(sx + 22, sealY + 92 + i); ctx.lineTo(sx + 2, sealY + 78); ctx.fill(); }
+  // Signature + date lines
+  const ly = H - 150;
+  rule(ctx, 130, ly, 330, '#6b7280', 1); text(ctx, 'Date', 230, ly + 22, { size: 12, color: MUTED, align: 'center' });
+  rule(ctx, W - 330, ly, W - 130, '#6b7280', 1); text(ctx, 'Signature', W - 230, ly + 22, { size: 12, color: MUTED, align: 'center' });
+  watermark(ctx);
+}
+const CERT_ORDER = entries.filter((e) => e.category === 'certificate').map((e) => e.slug);
+function renderCertificate(ctx, entry) {
+  const idx = Math.max(0, CERT_ORDER.indexOf(entry.slug)), accent = BK_ACCENTS[(idx * 3 + 3) % BK_ACCENTS.length];
+  return certAward(ctx, entry, accent);
+}
+
+const SOC_ORDER = entries.filter((e) => e.category === 'social').map((e) => e.slug);
+function renderSocial(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, SOC_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 5) % BK_ACCENTS.length];
+  if (/content-calendar|posting-schedule/.test(s)) return plMonth(ctx, entry, accent);
+  if (/engagement|growth|audit|hashtag|idea-bank/.test(s)) return plLog(ctx, entry, accent);
+  if (/post-planner|instagram|reels|pillar/.test(s)) return plWeekly(ctx, entry, accent);
+  return plChecklist(ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -2099,6 +2162,9 @@ function render(entry) {
   else if (entry.category === 'finance') renderFinance(ctx, entry);
   else if (entry.category === 'wedding') renderWedding(ctx, entry);
   else if (entry.category === 'health') renderHealth(ctx, entry);
+  else if (entry.category === 'kids') renderKids(ctx, entry);
+  else if (entry.category === 'certificate') renderCertificate(ctx, entry);
+  else if (entry.category === 'social') renderSocial(ctx, entry);
   else renderBusinessDoc(ctx, entry);
 
   return canvas.encode('png');
