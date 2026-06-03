@@ -18,7 +18,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 // Extract { slug, helper, category } triples from the catalog source.
 const catalogSrc = fs.readFileSync(path.join(root, 'src/config/templates.ts'), 'utf8');
-const entryRe = /t\('([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health)',[\s\S]*?(xlsxFiles|docxFiles|pdfFiles|emailSigFiles)\(/g;
+const entryRe = /t\('([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social)',[\s\S]*?(xlsxFiles|docxFiles|pdfFiles|emailSigFiles)\(/g;
 const entries = [];
 for (const m of catalogSrc.matchAll(entryRe)) {
   entries.push({ slug: m[1], title: m[2], category: m[3], helper: m[4] });
@@ -62,7 +62,7 @@ async function buildXlsx(entry) {
   else if (cat === 'planner') buildPlannerXlsx(wb, entry);
   else if (cat === 'business') buildBusinessXlsx(wb, entry);
   else if (cat === 'education') buildEducationXlsx(wb, entry);
-  else if (cat === 'finance' || cat === 'wedding' || cat === 'health') buildPlannerXlsx(wb, entry);
+  else if (cat === 'finance' || cat === 'wedding' || cat === 'health' || cat === 'kids' || cat === 'social') buildPlannerXlsx(wb, entry);
   else buildGenericXlsx(wb, entry);
 
   const file = path.join(outDir, `${entry.slug}.xlsx`);
@@ -328,6 +328,7 @@ async function buildDocx(entry) {
   else if (entry.category === 'education') children = buildEducationDocx(entry);
   else if (entry.category === 'invoice') children = buildInvoiceDocx(entry);
   else if (entry.category === 'bookkeeping') children = buildBookkeepingDocx(entry);
+  else if (entry.category === 'certificate') children = buildCertificateDocx(entry);
   else children = buildGenericDocx(entry);
 
   const doc = new Document({
@@ -338,6 +339,26 @@ async function buildDocx(entry) {
   });
   const buf = await Packer.toBuffer(doc);
   fs.writeFileSync(path.join(outDir, `${entry.slug}.docx`), buf);
+}
+
+function buildCertificateDocx(entry) {
+  const sub = /completion/.test(entry.slug) ? 'OF COMPLETION'
+    : /participation/.test(entry.slug) ? 'OF PARTICIPATION'
+    : /gift/.test(entry.slug) ? 'GIFT CERTIFICATE'
+    : 'OF ACHIEVEMENT';
+  const C = (text, opts = {}) => new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: opts.after ?? 160, before: opts.before ?? 0 }, children: [new TextRun({ text, bold: opts.bold, italics: opts.italics, size: opts.size ?? 22, color: opts.color })] });
+  return [
+    C('CERTIFICATE', { bold: true, size: 56, color: 'B45309', before: 400, after: 40 }),
+    C(sub, { bold: true, size: 26, color: '6B7280', after: 320 }),
+    C('This certificate is proudly presented to', { italics: true, size: 22, color: '374151' }),
+    C('_______________________________', { size: 40, after: 60 }),
+    C('(name)', { size: 16, color: '9CA3AF', after: 320 }),
+    C('in recognition of outstanding effort and dedication, and for', { size: 22, color: '4B5563', after: 40 }),
+    C('successfully meeting every requirement with excellence.', { size: 22, color: '4B5563', after: 480 }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: '______________________            ______________________', size: 24 })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Date                                        Signature', size: 18, color: '6B7280' })] }),
+    new Paragraph({ spacing: { before: 480 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Tip: add a decorative page border in Word via Design → Page Borders.', size: 16, color: '9CA3AF', italics: true })] }),
+  ];
 }
 
 function buildResumeDocx(entry) {
