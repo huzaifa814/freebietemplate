@@ -906,6 +906,553 @@ function renderEducation(ctx, entry) {
   watermark(ctx);
 }
 
+// ============================================================
+//  Bookkeeping previews — distinct, dashboard-style per type
+// ============================================================
+const BK_ACCENTS = [
+  ['#0d9488', '#14b8a6', '#5eead4', '#99f6e4'], // teal
+  ['#2563eb', '#3b82f6', '#93c5fd', '#bfdbfe'], // blue
+  ['#7c3aed', '#8b5cf6', '#c4b5fd', '#ddd6fe'], // violet
+  ['#db2777', '#ec4899', '#f9a8d4', '#fbcfe8'], // pink
+  ['#16a34a', '#22c55e', '#86efac', '#bbf7d0'], // green
+  ['#ea580c', '#f97316', '#fdba74', '#fed7aa'], // orange
+  ['#0891b2', '#06b6d4', '#67e8f9', '#a5f3fc'], // cyan
+  ['#4f46e5', '#6366f1', '#a5b4fc', '#c7d2fe'], // indigo
+];
+const accentFor = (slug) => BK_ACCENTS[hash(slug + 'acc') % BK_ACCENTS.length];
+const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+
+function rrect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+function bkHeader(ctx, entry, accent) {
+  box(ctx, 0, 0, W, 70, BRAND);
+  box(ctx, 0, 70, W, 4, accent[0]);
+  text(ctx, entry.title, 32, 38, { size: 21, color: '#ffffff', weight: '700' });
+  text(ctx, entry.description, 32, 60, { size: 12.5, color: '#fff7ed' });
+  // format tag
+  ctx.font = '700 11px Inter, Arial, sans-serif';
+  const tag = 'EXCEL · GOOGLE SHEETS';
+  const tw = ctx.measureText(tag).width + 24;
+  rrect(ctx, W - tw - 24, 22, tw, 24, 12, 'rgba(255,255,255,0.18)');
+  text(ctx, tag, W - tw - 12, 38, { size: 11, color: '#ffffff', weight: '700' });
+}
+
+function kpiRow(ctx, x, y, w, tiles) {
+  const gap = 14, n = tiles.length, tw = (w - gap * (n - 1)) / n, th = 80;
+  tiles.forEach((t, i) => {
+    const tx = x + i * (tw + gap);
+    rrect(ctx, tx, y, tw, th, 12, '#ffffff', LINE);
+    rrect(ctx, tx, y, 5, th, 3, t.color);
+    text(ctx, t.label, tx + 18, y + 28, { size: 11, color: MUTED, weight: '600' });
+    text(ctx, t.value, tx + 18, y + 60, { size: 23, color: INK, weight: '800' });
+  });
+  return y + th;
+}
+
+function fitText(ctx, str, maxW, size, weight) {
+  ctx.font = `${weight || ''} ${size}px Inter, Helvetica, Arial, sans-serif`.trim();
+  if (ctx.measureText(str).width <= maxW) return str;
+  let s = str;
+  while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+  return s + '…';
+}
+function drawTable(ctx, x, y, w, headers, rows, opts = {}) {
+  const colW = w / headers.length;
+  const right = opts.right || [headers.length - 1];
+  box(ctx, x, y, w, 34, '#fff7ed');
+  headers.forEach((h, i) => {
+    const r = right.includes(i);
+    text(ctx, h, r ? x + (i + 1) * colW - 14 : x + i * colW + 14, y + 22, { size: 12, weight: '700', color: '#92400e', align: r ? 'right' : 'left' });
+  });
+  rule(ctx, x, y + 34, x + w, '#fed7aa', 1);
+  rows.forEach((row, ri) => {
+    const ry = y + 34 + ri * 31;
+    if (ri % 2 === 1) box(ctx, x, ry, w, 31, SOFT);
+    row.forEach((cell, i) => {
+      const r = right.includes(i);
+      const col = opts.colorFn ? opts.colorFn(cell, i, row) : INK;
+      const str = fitText(ctx, String(cell), colW - 20, 11.5, r ? '600' : '');
+      text(ctx, str, r ? x + (i + 1) * colW - 14 : x + i * colW + 14, ry + 21, { size: 11.5, color: col, weight: r ? '600' : '', align: r ? 'right' : 'left' });
+    });
+    rule(ctx, x, ry + 31, x + w, '#f1f3f5', 1);
+  });
+  const minRows = opts.minRows || rows.length;
+  for (let ri = rows.length; ri < minRows; ri++) {
+    const ry = y + 34 + ri * 31;
+    if (ri % 2 === 1) box(ctx, x, ry, w, 31, SOFT);
+    rule(ctx, x, ry + 31, x + w, '#f1f3f5', 1);
+  }
+  return y + 34 + Math.max(rows.length, minRows) * 31;
+}
+
+function donut(ctx, cx, cy, r, segs, title) {
+  const total = segs.reduce((a, s) => a + s.v, 0) || 1;
+  let a = -Math.PI / 2;
+  segs.forEach((s) => {
+    const a2 = a + (s.v / total) * Math.PI * 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a, a2); ctx.closePath();
+    ctx.fillStyle = s.c; ctx.fill(); a = a2;
+  });
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2); ctx.fillStyle = PAPER; ctx.fill();
+  if (title) text(ctx, title, cx, cy + 5, { size: 12, color: MUTED, align: 'center', weight: '600' });
+  segs.forEach((s, i) => {
+    const ly = cy - r + 4 + i * 26;
+    rrect(ctx, cx + r + 26, ly - 11, 13, 13, 3, s.c);
+    text(ctx, s.label, cx + r + 48, ly, { size: 12, color: INK });
+    text(ctx, Math.round((s.v / total) * 100) + '%', cx + r + 190, ly, { size: 12, color: MUTED, weight: '600', align: 'right' });
+  });
+}
+
+function bars(ctx, x, y, w, h, vals, color, labels) {
+  const max = Math.max(...vals) || 1, n = vals.length, gap = w / n, bw = gap * 0.56;
+  rule(ctx, x, y + h, x + w, '#e5e7eb', 1);
+  vals.forEach((v, i) => {
+    const bh = (v / max) * (h - 8);
+    const bx = x + i * gap + (gap - bw) / 2;
+    rrect(ctx, bx, y + h - bh, bw, bh, 3, color);
+    if (labels) text(ctx, labels[i], bx + bw / 2, y + h + 16, { size: 10, color: MUTED, align: 'center' });
+  });
+}
+
+function footNote(ctx) {
+  text(ctx, 'FREE  ·  Auto-totals & formulas  ·  Excel + Google Sheets', W / 2, H - 18, { size: 13, color: MUTED, align: 'center' });
+}
+
+// ---- Per-type table content ----
+const EXP_POOLS = [
+  ['Payroll', 'Rent', 'Software', 'Marketing', 'Supplies'],
+  ['Materials', 'Labor', 'Fuel', 'Insurance', 'Permits'],
+  ['COGS', 'Shipping', 'Platform fees', 'Ads', 'Returns'],
+  ['Salaries', 'Utilities', 'Travel', 'Meals', 'Office'],
+];
+function bookSpec(entry) {
+  const s = entry.slug, h = hash(s), accent = accentFor(s);
+  const pool = EXP_POOLS[h % EXP_POOLS.length];
+  const seg = (i) => ['#0d9488', '#2563eb', '#f59e0b', '#db2777', '#64748b'][i];
+  const trend = Array.from({ length: 6 }, (_, i) => 6 + ((h >> i) % 9) + i);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const inc = 12000 + (h % 9000), exp = 4000 + (h % 4000);
+  const base = {
+    accent,
+    kpis: [
+      { label: 'Total income', value: money(inc), color: '#16a34a' },
+      { label: 'Total expenses', value: money(exp), color: '#dc2626' },
+      { label: 'Net profit', value: money(inc - exp), color: accent[0] },
+    ],
+    donut: pool.slice(0, 5).map((label, i) => ({ label, v: 30 - i * 4 + (h >> i) % 6, c: seg(i) })),
+    bars: trend, barLabels: months, barColor: accent[0],
+    right: [4], headers: ['Date', 'Description', 'Category', 'Type', 'Amount'],
+    tableTitle: 'Transactions',
+  };
+  const rows = (defs) => defs;
+  const map = {
+    'mileage-log': { headers: ['Date', 'Odo Start', 'Odo End', 'Miles', 'Purpose'], right: [3], tableTitle: 'Trip log',
+      rows: rows([['01/03', '40,210', '40,242', '32', 'Client visit'], ['01/05', '40,242', '40,318', '76', 'Job site'], ['01/08', '40,318', '40,361', '43', 'Supply run'], ['01/11', '40,361', '40,495', '134', 'Out-of-town job'], ['01/14', '40,495', '40,528', '33', 'Bank / post office'], ['01/18', '40,528', '40,612', '84', 'Client meeting'], ['01/22', '40,612', '40,659', '47', 'Vendor pickup']]),
+      kpis: [{ label: 'Total miles', value: '1,284', color: accent[0] }, { label: 'IRS rate', value: '$0.67', color: '#2563eb' }, { label: 'Deduction', value: '$860', color: '#16a34a' }],
+      donut: [{ label: 'Business', v: 78, c: accent[0] }, { label: 'Commute', v: 14, c: '#94a3b8' }, { label: 'Personal', v: 8, c: '#cbd5e1' }], donutTitle: 'Miles by use' },
+    'inventory-tracker': { headers: ['SKU', 'Item', 'On hand', 'Reorder', 'Value'], right: [4], tableTitle: 'Inventory',
+      rows: rows([['A-101', 'Canvas tote', '142', '50', '$1,704'], ['A-102', 'Ceramic mug', '38', '40', '$418'], ['B-210', 'Wax candle', '0', '25', '$0'], ['B-211', 'Gift box set', '67', '30', '$1,206'], ['C-330', 'Sticker pack', '210', '75', '$630'], ['C-331', 'Enamel pin', '54', '60', '$540'], ['D-440', 'Notebook A5', '88', '40', '$792']]),
+      kpis: [{ label: 'SKUs', value: '64', color: accent[0] }, { label: 'Inventory value', value: '$18,420', color: '#16a34a' }, { label: 'Below reorder', value: '7', color: '#dc2626' }],
+      donut: [{ label: 'In stock', v: 72, c: '#16a34a' }, { label: 'Low', v: 18, c: '#f59e0b' }, { label: 'Out', v: 10, c: '#dc2626' }], donutTitle: 'Stock status' },
+    'invoice-tracker': { headers: ['Invoice', 'Client', 'Due', 'Status', 'Amount'], right: [4], tableTitle: 'Invoices',
+      rows: rows([['INV-1042', 'Acme Co', 'Jun 10', 'Paid', '$4,500'], ['INV-1043', 'Bright LLC', 'Jun 14', 'Paid', '$1,200'], ['INV-1044', 'Nova Group', 'Jun 02', 'Overdue', '$2,800'], ['INV-1045', 'Pine & Co', 'Jun 20', 'Sent', '$960'], ['INV-1046', 'Vertex', 'Jun 22', 'Sent', '$3,400'], ['INV-1047', 'Lumen', 'May 28', 'Overdue', '$540'], ['INV-1048', 'Orbit', 'Jun 30', 'Draft', '$1,750']]),
+      kpis: [{ label: 'Outstanding', value: '$9,450', color: accent[0] }, { label: 'Overdue', value: '$3,340', color: '#dc2626' }, { label: 'Paid (MTD)', value: '$5,700', color: '#16a34a' }],
+      donut: [{ label: 'Paid', v: 50, c: '#16a34a' }, { label: 'Sent', v: 32, c: '#2563eb' }, { label: 'Overdue', v: 18, c: '#dc2626' }], donutTitle: 'By status',
+      colorFn: (c, i) => i === 3 ? (c === 'Paid' ? '#16a34a' : c === 'Overdue' ? '#dc2626' : MUTED) : INK },
+    'sales-tax-tracker': { headers: ['Period', 'State', 'Taxable', 'Rate', 'Tax due'], right: [2, 4], tableTitle: 'Taxable sales',
+      rows: rows([['Q1', 'CA', '$24,500', '7.25%', '$1,776'], ['Q1', 'TX', '$8,200', '6.25%', '$513'], ['Q1', 'NY', '$5,400', '4.00%', '$216'], ['Q2', 'CA', '$31,800', '7.25%', '$2,306'], ['Q2', 'TX', '$9,950', '6.25%', '$622'], ['Q2', 'FL', '$4,100', '6.00%', '$246'], ['Q2', 'NY', '$6,700', '4.00%', '$268']]),
+      kpis: [{ label: 'Taxable sales', value: '$90,650', color: accent[0] }, { label: 'Tax collected', value: '$5,947', color: '#16a34a' }, { label: 'Next filing', value: 'Jul 31', color: '#dc2626' }],
+      donut: [{ label: 'California', v: 58, c: accent[0] }, { label: 'Texas', v: 20, c: '#2563eb' }, { label: 'New York', v: 13, c: '#f59e0b' }, { label: 'Florida', v: 9, c: '#db2777' }], donutTitle: 'Tax by state' },
+    'payroll-register': { headers: ['Employee', 'Gross', 'Taxes', 'Deduct.', 'Net pay'], right: [1, 2, 3, 4], tableTitle: 'Pay period',
+      rows: rows([['M. Rivera', '$3,200', '$612', '$180', '$2,408'], ['A. Chen', '$2,850', '$528', '$150', '$2,172'], ['J. Brooks', '$3,600', '$702', '$210', '$2,688'], ['S. Park', '$2,400', '$432', '$120', '$1,848'], ['D. Hayes', '$4,100', '$820', '$240', '$3,040'], ['R. Stone', '$2,950', '$551', '$160', '$2,239']]),
+      kpis: [{ label: 'Gross payroll', value: '$19,100', color: accent[0] }, { label: 'Tax withheld', value: '$3,645', color: '#dc2626' }, { label: 'Net paid', value: '$14,395', color: '#16a34a' }],
+      donut: [{ label: 'Net pay', v: 75, c: '#16a34a' }, { label: 'Taxes', v: 19, c: '#dc2626' }, { label: 'Deductions', v: 6, c: '#f59e0b' }], donutTitle: 'Payroll split' },
+    'subscription-expense-tracker': { headers: ['Service', 'Billing', 'Renewal', 'Monthly', 'Annual'], right: [3, 4], tableTitle: 'Subscriptions',
+      rows: rows([['Adobe CC', 'Monthly', 'Jul 12', '$55', '$660'], ['QuickBooks', 'Monthly', 'Jul 03', '$30', '$360'], ['Canva Pro', 'Annual', 'Nov 20', '$11', '$120'], ['Slack', 'Monthly', 'Jul 09', '$48', '$576'], ['Zoom', 'Annual', 'Sep 01', '$13', '$150'], ['Notion', 'Monthly', 'Jul 15', '$24', '$288'], ['Dropbox', 'Annual', 'Oct 04', '$10', '$120']]),
+      kpis: [{ label: 'Subscriptions', value: '14', color: accent[0] }, { label: 'Monthly cost', value: '$246', color: '#dc2626' }, { label: 'Annualized', value: '$2,952', color: accent[0] }],
+      donut: [{ label: 'Software', v: 48, c: accent[0] }, { label: 'Marketing', v: 24, c: '#2563eb' }, { label: 'Ops', v: 18, c: '#f59e0b' }, { label: 'Other', v: 10, c: '#94a3b8' }], donutTitle: 'By category' },
+    'petty-cash-log': { headers: ['Date', 'Description', 'In', 'Out', 'Balance'], right: [2, 3, 4], tableTitle: 'Petty cash',
+      rows: rows([['06/01', 'Opening float', '$200', '', '$200'], ['06/03', 'Postage', '', '$18', '$182'], ['06/05', 'Office snacks', '', '$34', '$148'], ['06/09', 'Parking', '', '$12', '$136'], ['06/12', 'Top-up', '$100', '', '$236'], ['06/15', 'Cleaning supplies', '', '$41', '$195'], ['06/18', 'Client gift', '', '$25', '$170']]),
+      kpis: [{ label: 'Float', value: '$300', color: accent[0] }, { label: 'Spent (MTD)', value: '$130', color: '#dc2626' }, { label: 'On hand', value: '$170', color: '#16a34a' }],
+      donut: [{ label: 'Office', v: 38, c: accent[0] }, { label: 'Postage', v: 22, c: '#2563eb' }, { label: 'Travel', v: 24, c: '#f59e0b' }, { label: 'Other', v: 16, c: '#94a3b8' }], donutTitle: 'Cash out' },
+    'fixed-asset-register': { headers: ['Asset', 'In service', 'Cost', 'Life', 'Book value'], right: [2, 4], tableTitle: 'Fixed assets',
+      rows: rows([['Laptop Pro', '01/2024', '$2,400', '5y', '$1,440'], ['Espresso machine', '03/2023', '$6,500', '7y', '$4,250'], ['Delivery van', '06/2022', '$28,000', '5y', '$11,200'], ['Camera kit', '09/2023', '$4,100', '5y', '$2,870'], ['Office furniture', '02/2024', '$3,200', '7y', '$2,743'], ['Server', '11/2023', '$5,400', '5y', '$4,140']]),
+      kpis: [{ label: 'Assets', value: '12', color: accent[0] }, { label: 'Total cost', value: '$72,400', color: accent[0] }, { label: 'Book value', value: '$41,180', color: '#16a34a' }],
+      donut: [{ label: 'Equipment', v: 46, c: accent[0] }, { label: 'Vehicles', v: 34, c: '#2563eb' }, { label: 'Furniture', v: 12, c: '#f59e0b' }, { label: 'Tech', v: 8, c: '#db2777' }], donutTitle: 'Asset mix' },
+    'job-costing': { headers: ['Job', 'Quote', 'Materials', 'Labor', 'Margin'], right: [1, 2, 3, 4], tableTitle: 'Jobs',
+      rows: rows([['Maple St reno', '$18,000', '$6,200', '$5,400', '37%'], ['Oak Ave deck', '$9,500', '$3,100', '$2,800', '38%'], ['Elm kitchen', '$24,000', '$9,800', '$7,200', '29%'], ['Pine fence', '$4,200', '$1,500', '$1,300', '33%'], ['Cedar bath', '$12,800', '$4,900', '$4,100', '30%'], ['Birch patio', '$7,600', '$2,600', '$2,200', '37%']]),
+      kpis: [{ label: 'Jobs (MTD)', value: '9', color: accent[0] }, { label: 'Revenue', value: '$76,100', color: '#16a34a' }, { label: 'Avg margin', value: '34%', color: accent[0] }],
+      donut: [{ label: 'Labor', v: 40, c: accent[0] }, { label: 'Materials', v: 38, c: '#2563eb' }, { label: 'Margin', v: 22, c: '#16a34a' }], donutTitle: 'Cost split' },
+    'client-tracker': { headers: ['Client', 'Status', 'Last contact', 'LTV', 'Next step'], right: [3], tableTitle: 'Clients',
+      rows: rows([['Acme Co', 'Active', 'Jun 12', '$24,000', 'Send proposal'], ['Bright LLC', 'Active', 'Jun 09', '$8,400', 'Monthly call'], ['Nova Group', 'Lead', 'Jun 05', '$0', 'Follow up'], ['Pine & Co', 'Active', 'May 30', '$15,200', 'Renewal'], ['Vertex', 'Paused', 'Apr 18', '$6,100', 'Re-engage'], ['Orbit', 'Lead', 'Jun 14', '$0', 'Demo call']]),
+      kpis: [{ label: 'Active clients', value: '18', color: accent[0] }, { label: 'Pipeline', value: '$42k', color: '#2563eb' }, { label: 'Lifetime value', value: '$210k', color: '#16a34a' }],
+      donut: [{ label: 'Active', v: 56, c: '#16a34a' }, { label: 'Lead', v: 28, c: '#2563eb' }, { label: 'Paused', v: 16, c: '#f59e0b' }], donutTitle: 'By status' },
+  };
+  const spec = { ...base, ...(map[s] || {}) };
+  // industry tailoring for niche books with no explicit map
+  if (!map[s]) {
+    if (/seller|amazon|shopify|etsy|ecommerce/.test(s)) {
+      spec.headers = ['Order', 'Revenue', 'Fees', 'Ship', 'Net']; spec.right = [1, 2, 3, 4]; spec.tableTitle = 'Orders';
+      spec.rows = [['#1042', '$84.00', '$12.60', '$6.40', '$65.00'], ['#1043', '$129.00', '$19.40', '$8.20', '$101.40'], ['#1044', '$46.00', '$6.90', '$5.10', '$34.00'], ['#1045', '$212.00', '$31.80', '$11.00', '$169.20'], ['#1046', '$58.00', '$8.70', '$5.40', '$43.90'], ['#1047', '$164.00', '$24.60', '$9.30', '$130.10'], ['#1048', '$92.00', '$13.80', '$6.80', '$71.40']];
+    } else if (/rental|landlord/.test(s)) {
+      spec.headers = ['Property', 'Rent', 'Mortgage', 'Repairs', 'Net']; spec.right = [1, 2, 3, 4]; spec.tableTitle = 'Properties';
+      spec.rows = [['123 Oak St', '$2,400', '$1,180', '$0', '$1,220'], ['88 Pine Ave', '$1,950', '$1,040', '$320', '$590'], ['12 Maple Ct', '$2,800', '$1,360', '$0', '$1,440'], ['305 Elm Rd', '$1,700', '$905', '$150', '$645'], ['47 Birch Ln', '$2,200', '$1,120', '$80', '$1,000'], ['9 Cedar Dr', '$3,100', '$1,540', '$0', '$1,560']];
+    } else if (/trucking|owner-operator/.test(s)) {
+      spec.headers = ['Load #', 'Revenue', 'Fuel', 'Repairs', 'Net']; spec.right = [1, 2, 3, 4]; spec.tableTitle = 'Loads';
+      spec.rows = [['L-2207', '$2,850', '$640', '$120', '$2,090'], ['L-2208', '$1,940', '$510', '$0', '$1,430'], ['L-2209', '$3,420', '$780', '$240', '$2,400'], ['L-2210', '$2,180', '$590', '$0', '$1,590'], ['L-2211', '$2,760', '$700', '$95', '$1,965'], ['L-2212', '$1,580', '$430', '$0', '$1,150']];
+    } else if (/restaurant|food-truck/.test(s)) {
+      spec.headers = ['Day', 'Sales', 'Food %', 'Labor %', 'Net']; spec.right = [1, 4]; spec.tableTitle = 'Daily sales';
+      spec.rows = [['Mon', '$1,840', '31%', '28%', '$420'], ['Tue', '$2,120', '29%', '27%', '$610'], ['Wed', '$1,990', '32%', '29%', '$480'], ['Thu', '$2,640', '30%', '26%', '$870'], ['Fri', '$3,980', '28%', '24%', '$1,640'], ['Sat', '$4,520', '27%', '23%', '$2,030']];
+    } else if (/1099|self-employed/.test(s)) {
+      spec.headers = ['Date', 'Payer / expense', 'Schedule C', 'Type', 'Amount']; spec.tableTitle = 'Income & write-offs';
+      spec.rows = [['03/04', 'Acme Corp', 'Gross receipts', 'Income', '$3,200'], ['03/06', 'Adobe CC', 'Software', 'Expense', '$55'], ['03/09', 'Home office', 'Utilities', 'Expense', '$140'], ['03/12', 'Bright LLC', 'Gross receipts', 'Income', '$1,850'], ['03/15', 'Mileage', 'Car & truck', 'Expense', '$320'], ['03/18', 'Health ins.', 'Insurance', 'Expense', '$410'], ['03/22', 'Nova Group', 'Gross receipts', 'Income', '$2,400']];
+    }
+  }
+  return spec;
+}
+
+const LEDGER_ROWS = [
+  ['01/02', 'Client invoice #1042', 'Sales', 'Income', '$4,500'],
+  ['01/03', 'Office supplies', 'Office', 'Expense', '$128'],
+  ['01/05', 'Software subscription', 'Software', 'Expense', '$49'],
+  ['01/08', 'Consulting retainer', 'Services', 'Income', '$2,400'],
+  ['01/10', 'Client lunch', 'Meals', 'Expense', '$32'],
+  ['01/12', 'Travel — flight', 'Travel', 'Expense', '$418'],
+  ['01/15', 'Project milestone', 'Sales', 'Income', '$8,000'],
+];
+function tableColorFn(spec) {
+  return spec.colorFn || ((c, i, row) => (i === spec.right[spec.right.length - 1] && row[3] ? (row[3] === 'Income' ? '#047857' : row[3] === 'Expense' ? '#b91c1c' : INK) : INK));
+}
+function moSeries(slug) {
+  const h = hash(slug + 'mo'), months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const income = Array.from({ length: 6 }, (_, i) => 9 + ((h >> i) % 10) + Math.round(i * 0.8));
+  const expense = Array.from({ length: 6 }, (_, i) => 3 + ((h >> (i + 3)) % 6));
+  return { months, income, expense };
+}
+function groupedBars(ctx, x, y, w, h, a, b, labels, ca, cb) {
+  const max = Math.max(...a, ...b) || 1, n = a.length, gap = w / n, bw = gap * 0.3;
+  rule(ctx, x, y + h, x + w, '#e5e7eb', 1);
+  for (let i = 0; i < n; i++) {
+    const bx = x + i * gap + gap * 0.12;
+    rrect(ctx, bx, y + h - (a[i] / max) * (h - 6), bw, (a[i] / max) * (h - 6), 3, ca);
+    rrect(ctx, bx + bw + 5, y + h - (b[i] / max) * (h - 6), bw, (b[i] / max) * (h - 6), 3, cb);
+    if (labels) text(ctx, labels[i], bx + bw, y + h + 16, { size: 10, color: MUTED, align: 'center' });
+  }
+}
+function lineChart(ctx, x, y, w, h, vals, color) {
+  const max = Math.max(...vals) || 1, min = Math.min(...vals), n = vals.length, rng = (max - min) || 1;
+  rule(ctx, x, y + h, x + w, '#e5e7eb', 1);
+  ctx.beginPath();
+  vals.forEach((v, i) => { const px = x + (i / (n - 1)) * w, py = y + h - ((v - min) / rng) * (h - 12) - 6; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+  vals.forEach((v, i) => { const px = x + (i / (n - 1)) * w, py = y + h - ((v - min) / rng) * (h - 12) - 6; ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill(); });
+}
+function vtile(ctx, x, y, w, t) {
+  rrect(ctx, x, y, w, 58, 10, '#ffffff', LINE);
+  rrect(ctx, x, y, 5, 58, 3, t.color);
+  text(ctx, t.label, x + 16, y + 22, { size: 10.5, color: MUTED, weight: '600' });
+  text(ctx, t.value, x + 16, y + 46, { size: 19, color: INK, weight: '800' });
+}
+function catList(ctx, x, y, w, segs) {
+  const total = segs.reduce((a, s) => a + s.v, 0) || 1; let yy = y;
+  segs.slice(0, 4).forEach((s) => {
+    text(ctx, s.label, x, yy + 9, { size: 11, color: INK });
+    text(ctx, Math.round((s.v / total) * 100) + '%', x + w, yy + 9, { size: 11, color: MUTED, align: 'right', weight: '600' });
+    rrect(ctx, x, yy + 16, w * (s.v / total), 8, 4, s.c);
+    yy += 36;
+  });
+}
+
+// ---- Five distinct dashboard layouts (assigned by slug) ----
+function layoutDashboard(ctx, entry, spec) {
+  let y = kpiRow(ctx, 30, 92, W - 60, spec.kpis) + 22;
+  text(ctx, spec.tableTitle || 'Transactions', 30, y, { size: 14, weight: '700' }); y += 12;
+  drawTable(ctx, 30, y, W - 60, spec.headers, spec.rows || LEDGER_ROWS, { right: spec.right, colorFn: tableColorFn(spec), minRows: 9 });
+  const py = 700; rrect(ctx, 30, py, W - 60, 270, 14, '#ffffff', LINE);
+  text(ctx, spec.donutTitle || 'Category breakdown', 56, py + 32, { size: 13, weight: '700' });
+  donut(ctx, 130, py + 150, 78, spec.donut);
+  text(ctx, 'Monthly trend', 470, py + 32, { size: 13, weight: '700' });
+  bars(ctx, 470, py + 58, 250, 150, spec.bars, spec.barColor, spec.barLabels);
+}
+function layoutReport(ctx, entry, spec) {
+  const s = moSeries(entry.slug);
+  rrect(ctx, 30, 92, W - 60, 212, 14, '#ffffff', LINE);
+  text(ctx, 'Income vs expenses', 56, 124, { size: 13, weight: '700' });
+  rrect(ctx, W - 190, 110, 12, 12, 3, '#16a34a'); text(ctx, 'Income', W - 172, 120, { size: 11, color: MUTED });
+  rrect(ctx, W - 110, 110, 12, 12, 3, '#ef4444'); text(ctx, 'Expenses', W - 92, 120, { size: 11, color: MUTED });
+  groupedBars(ctx, 60, 150, W - 120, 112, s.income, s.expense, s.months, '#16a34a', '#ef4444');
+  kpiRow(ctx, 30, 328, W - 60, spec.kpis);
+  let y = 434; text(ctx, spec.tableTitle || 'Recent activity', 30, y, { size: 14, weight: '700' }); y += 12;
+  drawTable(ctx, 30, y, W - 60, spec.headers, (spec.rows || LEDGER_ROWS).slice(0, 7), { right: spec.right, colorFn: tableColorFn(spec), minRows: 9 });
+}
+function layoutSplit(ctx, entry, spec) {
+  const lw = 430;
+  text(ctx, spec.tableTitle || 'Detail', 30, 116, { size: 14, weight: '700' });
+  drawTable(ctx, 30, 128, lw, spec.headers, spec.rows || LEDGER_ROWS, { right: [spec.headers.length - 1], colorFn: tableColorFn(spec), minRows: 22 });
+  const rx = 30 + lw + 24, rw = W - rx - 30;
+  spec.kpis.forEach((t, i) => vtile(ctx, rx, 116 + i * 70, rw, t));
+  let py = 116 + 3 * 70 + 12;
+  rrect(ctx, rx, py, rw, 168, 12, '#ffffff', LINE);
+  text(ctx, 'Monthly trend', rx + 16, py + 26, { size: 12.5, weight: '700' });
+  bars(ctx, rx + 16, py + 44, rw - 32, 96, spec.bars, spec.barColor, spec.barLabels);
+  py += 184;
+  rrect(ctx, rx, py, rw, 196, 12, '#ffffff', LINE);
+  text(ctx, spec.donutTitle || 'Top categories', rx + 16, py + 26, { size: 12.5, weight: '700' });
+  catList(ctx, rx + 16, py + 44, rw - 32, spec.donut);
+}
+function layoutRegister(ctx, entry, spec) {
+  rrect(ctx, 30, 92, W - 60, 52, 10, '#fffbeb', '#fde68a');
+  const seg = (W - 60) / 3;
+  spec.kpis.forEach((t, i) => {
+    const x = 30 + i * seg + 22;
+    if (i) rule(ctx, 30 + i * seg, 100, 30 + i * seg, '#fde68a', 1), ctx.beginPath();
+    text(ctx, t.label, x, 116, { size: 11, color: MUTED, weight: '600' });
+    text(ctx, t.value, x, 136, { size: 17, weight: '800', color: t.color });
+  });
+  text(ctx, spec.tableTitle || 'Register', 30, 176, { size: 14, weight: '700' });
+  drawTable(ctx, 30, 188, W - 60, spec.headers, spec.rows || LEDGER_ROWS, { right: spec.right, colorFn: tableColorFn(spec), minRows: 23 });
+}
+function layoutMetrics(ctx, entry, spec) {
+  const tiles = spec.kpis.concat([{ label: 'Avg / month', value: spec.kpis[0].value, color: '#64748b' }]).slice(0, 4);
+  const halfW = (W - 60) * 0.5, tw = (halfW - 14) / 2, th = 78;
+  tiles.forEach((t, i) => {
+    const cx = 30 + (i % 2) * (tw + 14), cy = 92 + Math.floor(i / 2) * (th + 14);
+    rrect(ctx, cx, cy, tw, th, 12, '#ffffff', LINE); rrect(ctx, cx, cy, 5, th, 3, t.color);
+    text(ctx, t.label, cx + 16, cy + 26, { size: 10.5, color: MUTED, weight: '600' });
+    text(ctx, t.value, cx + 16, cy + 58, { size: 20, weight: '800' });
+  });
+  const dx = 30 + halfW + 14, dw = W - 30 - dx;
+  rrect(ctx, dx, 92, dw, 170, 12, '#ffffff', LINE);
+  text(ctx, spec.donutTitle || 'Breakdown', dx + 16, 116, { size: 12, weight: '700' });
+  donut(ctx, dx + 58, 188, 50, spec.donut.slice(0, 4));
+  const s = moSeries(entry.slug);
+  rrect(ctx, 30, 280, W - 60, 175, 12, '#ffffff', LINE);
+  text(ctx, 'Net trend (6 mo)', 56, 310, { size: 13, weight: '700' });
+  lineChart(ctx, 60, 328, W - 120, 100, s.income.map((v, i) => v - s.expense[i]), spec.barColor);
+  let y = 488; text(ctx, spec.tableTitle || 'Recent', 30, y, { size: 13, weight: '700' }); y += 12;
+  drawTable(ctx, 30, y, W - 60, spec.headers, (spec.rows || LEDGER_ROWS).slice(0, 6), { right: spec.right, colorFn: tableColorFn(spec), minRows: 8 });
+}
+const BOOK_LAYOUTS = [layoutDashboard, layoutReport, layoutSplit, layoutRegister, layoutMetrics];
+// Structural slugs render via dedicated layouts; the rest rotate round-robin so
+// adjacent cards always differ in both structure and accent color.
+const BK_STRUCT = new Set(['profit-loss-statement', 'balance-sheet-template', 'accounts-receivable-aging', 'accounts-payable-aging', 'budget-vs-actual-tracker', 'chart-of-accounts', 'general-ledger']);
+const BK_ORDER = entries.filter((e) => e.category === 'bookkeeping' && !BK_STRUCT.has(e.slug)).map((e) => e.slug);
+function renderBookDashboard(ctx, entry) {
+  paper(ctx);
+  const spec = bookSpec(entry);
+  const idx = Math.max(0, BK_ORDER.indexOf(entry.slug));
+  const accent = BK_ACCENTS[(idx * 3 + 1) % BK_ACCENTS.length];
+  spec.accent = accent;
+  spec.barColor = accent[0];
+  if (spec.kpis[spec.kpis.length - 1]) spec.kpis[spec.kpis.length - 1].color = accent[0];
+  bkHeader(ctx, entry, accent);
+  BOOK_LAYOUTS[idx % BOOK_LAYOUTS.length](ctx, entry, spec);
+  footNote(ctx);
+  watermark(ctx);
+}
+
+// ---- Dedicated structural layouts ----
+function sectionRows(ctx, x, y, w, title, items, accent) {
+  text(ctx, title, x, y, { size: 12.5, weight: '800', color: accent });
+  rule(ctx, x, y + 8, x + w, accent, 2);
+  let yy = y + 32;
+  items.forEach(([label, val, opts = {}]) => {
+    text(ctx, label, x + (opts.indent ? 16 : 0), yy, { size: 12.5, color: opts.bold ? INK : '#374151', weight: opts.bold ? '700' : '' });
+    text(ctx, val, x + w, yy, { size: 12.5, align: 'right', weight: opts.bold ? '800' : '600', color: opts.color || INK });
+    if (opts.rule) rule(ctx, x, yy + 8, x + w, LINE, 1);
+    yy += opts.gap || 26;
+  });
+  return yy;
+}
+function renderPnL(ctx, entry) {
+  paper(ctx);
+  const accent = accentFor(entry.slug);
+  bkHeader(ctx, entry, accent);
+  kpiRow(ctx, 30, 92, W - 60, [
+    { label: 'Total revenue', value: '$148,200', color: '#16a34a' },
+    { label: 'Net income', value: '$52,640', color: accent[0] },
+    { label: 'Net margin', value: '35.5%', color: '#2563eb' },
+  ]);
+  const x = 56, w = W - 112;
+  let y = 210;
+  y = sectionRows(ctx, x, y, w, 'REVENUE', [['Product sales', '$112,400'], ['Service revenue', '$35,800'], ['Total revenue', '$148,200', { bold: true, rule: true, color: '#047857' }]], accent[0]) + 14;
+  y = sectionRows(ctx, x, y, w, 'COST OF GOODS SOLD', [['Materials', '$38,900'], ['Direct labor', '$24,200'], ['Total COGS', '$63,100', { bold: true, rule: true, color: '#b91c1c' }]], accent[0]) + 6;
+  rrect(ctx, x, y, w, 38, 8, '#ecfdf5'); text(ctx, 'GROSS PROFIT', x + 14, y + 25, { size: 13, weight: '800' }); text(ctx, '$85,100', x + w - 14, y + 25, { size: 14, weight: '800', align: 'right', color: '#047857' }); y += 56;
+  y = sectionRows(ctx, x, y, w, 'OPERATING EXPENSES', [['Payroll', '$18,400'], ['Rent', '$7,200'], ['Marketing', '$4,860'], ['Software & tools', '$2,000'], ['Total operating expenses', '$32,460', { bold: true, rule: true, color: '#b91c1c' }]], accent[0]) + 6;
+  rrect(ctx, x, y, w, 44, 8, accent[3]); text(ctx, 'NET INCOME', x + 14, y + 29, { size: 14, weight: '800' }); text(ctx, '$52,640', x + w - 14, y + 29, { size: 17, weight: '800', align: 'right', color: accent[0] });
+  footNote(ctx); watermark(ctx);
+}
+function renderBalanceSheet(ctx, entry) {
+  paper(ctx);
+  const accent = accentFor(entry.slug);
+  bkHeader(ctx, entry, accent);
+  text(ctx, 'As of June 30, 2026', 32, 96, { size: 12, color: MUTED });
+  const colW = (W - 112 - 32) / 2, lx = 56, rx = 56 + colW + 32;
+  let ly = 140;
+  ly = sectionRows(ctx, lx, ly, colW, 'ASSETS', [['Cash & bank', '$42,800'], ['Accounts receivable', '$18,400'], ['Inventory', '$12,100'], ['Equipment (net)', '$31,500'], ['Total assets', '$104,800', { bold: true, rule: true, color: accent[0] }]], accent[0]);
+  let ry = 140;
+  ry = sectionRows(ctx, rx, ry, colW, 'LIABILITIES', [['Accounts payable', '$9,600'], ['Credit cards', '$3,400'], ['Equipment loan', '$22,000'], ['Total liabilities', '$35,000', { bold: true, rule: true, color: '#b91c1c' }]], accent[0]) + 18;
+  ry = sectionRows(ctx, rx, ry, colW, 'EQUITY', [["Owner's capital", '$48,000'], ['Retained earnings', '$21,800'], ['Total equity', '$69,800', { bold: true, rule: true, color: '#047857' }]], accent[0]);
+  const by = Math.max(ly, ry) + 40;
+  rrect(ctx, 56, by, W - 112, 56, 10, '#ecfdf5', '#a7f3d0');
+  text(ctx, 'Assets', 80, by + 34, { size: 13, weight: '700' });
+  text(ctx, '$104,800   =   Liabilities $35,000   +   Equity $69,800', W - 80, by + 34, { size: 13, weight: '800', align: 'right', color: '#047857' });
+  text(ctx, '✓ Balanced — the sheet validates automatically', 56, by + 92, { size: 12, color: MUTED });
+  footNote(ctx); watermark(ctx);
+}
+function renderAging(ctx, entry, isAP) {
+  paper(ctx);
+  const accent = accentFor(entry.slug);
+  bkHeader(ctx, entry, accent);
+  const who = isAP ? 'Vendor' : 'Customer';
+  kpiRow(ctx, 30, 92, W - 60, [
+    { label: isAP ? 'Total payable' : 'Total outstanding', value: '$48,900', color: accent[0] },
+    { label: 'Current', value: '$28,400', color: '#16a34a' },
+    { label: '60+ days overdue', value: '$9,100', color: '#dc2626' },
+  ]);
+  const headers = [who, 'Current', '1–30', '31–60', '61–90', '90+', 'Total'];
+  const rows = [
+    ['Acme Co', '$8,400', '$0', '$0', '$0', '$0', '$8,400'],
+    ['Bright LLC', '$0', '$3,200', '$0', '$0', '$0', '$3,200'],
+    ['Nova Group', '$0', '$0', '$2,800', '$1,400', '$0', '$4,200'],
+    ['Pine & Co', '$6,100', '$2,400', '$0', '$0', '$0', '$8,500'],
+    ['Vertex', '$0', '$0', '$0', '$0', '$3,600', '$3,600'],
+    ['Lumen', '$4,200', '$1,800', '$900', '$0', '$0', '$6,900'],
+    ['Orbit', '$0', '$0', '$0', '$2,300', '$1,500', '$3,800'],
+  ];
+  drawTable(ctx, 30, 210, W - 60, headers, rows, {
+    right: [1, 2, 3, 4, 5, 6],
+    colorFn: (c, i) => (i === 4 || i === 5) && c !== '$0' ? '#dc2626' : (i === 6 ? INK : (c === '$0' ? '#cbd5e1' : '#374151')),
+  });
+  const py = 700;
+  rrect(ctx, 30, py, W - 60, 250, 14, '#ffffff', LINE);
+  text(ctx, 'Aging distribution', 56, py + 32, { size: 13, weight: '700' });
+  const buckets = [['Current', 28400, '#16a34a'], ['1–30', 9400, '#84cc16'], ['31–60', 3700, '#f59e0b'], ['61–90', 3700, '#f97316'], ['90+', 5100, '#dc2626']];
+  // colored bars by severity (green → red)
+  const max = Math.max(...buckets.map((b) => b[1])) || 1, gap = 660 / buckets.length, x0 = 70, h = 140, y0 = py + 60, bw = gap * 0.5;
+  rule(ctx, x0, y0 + h, x0 + 660, '#e5e7eb', 1);
+  buckets.forEach((b, i) => {
+    const bh = (b[1] / max) * (h - 8), bx = x0 + i * gap + (gap - bw) / 2;
+    rrect(ctx, bx, y0 + h - bh, bw, bh, 3, b[2]);
+    text(ctx, b[0], bx + bw / 2, y0 + h + 18, { size: 11, color: MUTED, align: 'center' });
+    text(ctx, money(b[1]), bx + bw / 2, y0 + h - bh - 8, { size: 10, color: b[2], align: 'center', weight: '700' });
+  });
+  footNote(ctx); watermark(ctx);
+}
+function renderBudgetActual(ctx, entry) {
+  paper(ctx);
+  const accent = accentFor(entry.slug);
+  bkHeader(ctx, entry, accent);
+  kpiRow(ctx, 30, 92, W - 60, [
+    { label: 'Budgeted', value: '$42,000', color: '#2563eb' },
+    { label: 'Actual', value: '$38,640', color: accent[0] },
+    { label: 'Variance', value: '+$3,360', color: '#16a34a' },
+  ]);
+  const headers = ['Category', 'Budget', 'Actual', 'Variance', '%'];
+  const rows = [
+    ['Payroll', '$18,000', '$17,400', '+$600', '+3%'],
+    ['Rent', '$7,200', '$7,200', '$0', '0%'],
+    ['Marketing', '$5,000', '$6,300', '−$1,300', '−26%'],
+    ['Software', '$2,400', '$2,140', '+$260', '+11%'],
+    ['Supplies', '$3,200', '$2,800', '+$400', '+13%'],
+    ['Travel', '$3,000', '$1,600', '+$1,400', '+47%'],
+    ['Utilities', '$3,200', '$1,200', '+$2,000', '+63%'],
+  ];
+  drawTable(ctx, 30, 210, W - 60, headers, rows, {
+    right: [1, 2, 3, 4],
+    colorFn: (c, i) => (i === 3 || i === 4) ? (String(c).startsWith('−') ? '#dc2626' : String(c).startsWith('+') ? '#16a34a' : MUTED) : INK,
+  });
+  const py = 690;
+  rrect(ctx, 30, py, W - 60, 260, 14, '#ffffff', LINE);
+  text(ctx, 'Budget vs actual', 56, py + 32, { size: 13, weight: '700' });
+  const cats = ['Payroll', 'Rent', 'Mktg', 'SW', 'Supp', 'Travel'];
+  const bud = [18000, 7200, 5000, 2400, 3200, 3000], act = [17400, 7200, 6300, 2140, 2800, 1600];
+  const max = 18000, gap = 640 / cats.length, x0 = 60, h = 150, y0 = py + 56;
+  rule(ctx, x0, y0 + h, x0 + 640, '#e5e7eb', 1);
+  cats.forEach((c, i) => {
+    const bx = x0 + i * gap + 10;
+    rrect(ctx, bx, y0 + h - (bud[i] / max) * h, gap * 0.32, (bud[i] / max) * h, 3, '#93c5fd');
+    rrect(ctx, bx + gap * 0.36, y0 + h - (act[i] / max) * h, gap * 0.32, (act[i] / max) * h, 3, accent[0]);
+    text(ctx, c, bx + gap * 0.34, y0 + h + 18, { size: 10, color: MUTED, align: 'center' });
+  });
+  rrect(ctx, 560, py + 24, 12, 12, 3, '#93c5fd'); text(ctx, 'Budget', 578, py + 34, { size: 11, color: MUTED });
+  rrect(ctx, 640, py + 24, 12, 12, 3, accent[0]); text(ctx, 'Actual', 658, py + 34, { size: 11, color: MUTED });
+  footNote(ctx); watermark(ctx);
+}
+function renderCOA(ctx, entry) {
+  paper(ctx);
+  const accent = accentFor(entry.slug);
+  bkHeader(ctx, entry, accent);
+  const groups = [
+    ['ASSETS', '#2563eb', [['1000', 'Cash — Operating'], ['1010', 'Cash — Savings'], ['1200', 'Accounts Receivable'], ['1400', 'Inventory'], ['1500', 'Equipment']]],
+    ['LIABILITIES', '#dc2626', [['2000', 'Accounts Payable'], ['2100', 'Credit Card'], ['2400', 'Sales Tax Payable'], ['2700', 'Equipment Loan']]],
+    ['EQUITY', '#7c3aed', [['3000', "Owner's Capital"], ['3100', "Owner's Draw"], ['3900', 'Retained Earnings']]],
+    ['INCOME', '#16a34a', [['4000', 'Product Sales'], ['4100', 'Service Revenue'], ['4900', 'Other Income']]],
+    ['EXPENSES', '#f59e0b', [['5000', 'COGS'], ['6000', 'Payroll'], ['6100', 'Rent'], ['6200', 'Marketing'], ['6300', 'Software']]],
+  ];
+  let y = 110;
+  const x = 40, w = W - 80;
+  groups.forEach(([name, color, accts]) => {
+    rrect(ctx, x, y, w, 30, 6, color + '22');
+    rrect(ctx, x, y, 5, 30, 2, color);
+    text(ctx, name, x + 16, y + 20, { size: 12.5, weight: '800', color });
+    text(ctx, `${accts.length} accounts`, x + w - 14, y + 20, { size: 11, color: MUTED, align: 'right' });
+    y += 38;
+    accts.forEach(([num, label], i) => {
+      if (i % 2 === 1) box(ctx, x, y - 4, w, 26, SOFT);
+      text(ctx, num, x + 16, y + 14, { size: 12, color: MUTED, weight: '600' });
+      text(ctx, label, x + 90, y + 14, { size: 12.5, color: INK });
+      y += 26;
+    });
+    y += 12;
+  });
+  footNote(ctx); watermark(ctx);
+}
+function renderGeneralLedger(ctx, entry) {
+  paper(ctx);
+  const accent = accentFor(entry.slug);
+  bkHeader(ctx, entry, accent);
+  kpiRow(ctx, 30, 92, W - 60, [
+    { label: 'Total debits', value: '$24,860', color: accent[0] },
+    { label: 'Total credits', value: '$24,860', color: '#2563eb' },
+    { label: 'In balance', value: '✓ Yes', color: '#16a34a' },
+  ]);
+  const headers = ['Date', 'Account', 'Memo', 'Debit', 'Credit', 'Balance'];
+  const rows = [
+    ['06/01', '1000 Cash', 'Opening', '$8,000', '', '$8,000'],
+    ['06/02', '1200 AR', 'Invoice #1042', '$4,500', '', '$12,500'],
+    ['06/02', '4000 Sales', 'Invoice #1042', '', '$4,500', '$8,000'],
+    ['06/05', '6100 Rent', 'June rent', '$2,200', '', '$10,200'],
+    ['06/05', '1000 Cash', 'June rent', '', '$2,200', '$8,000'],
+    ['06/08', '1000 Cash', 'Payment recd', '$4,500', '', '$12,500'],
+    ['06/08', '1200 AR', 'Payment recd', '', '$4,500', '$8,000'],
+    ['06/12', '6200 Mktg', 'Ad campaign', '$860', '', '$8,860'],
+  ];
+  drawTable(ctx, 30, 210, W - 60, headers, rows, {
+    right: [3, 4, 5],
+    colorFn: (c, i) => i === 3 ? (c ? '#16a34a' : INK) : i === 4 ? (c ? '#dc2626' : INK) : INK,
+  });
+  text(ctx, 'Every entry posts to two accounts — debits always equal credits.', 30, 690, { size: 12, color: MUTED });
+  footNote(ctx); watermark(ctx);
+}
+
+function renderBookkeeping(ctx, entry) {
+  const s = entry.slug;
+  if (s === 'profit-loss-statement') return renderPnL(ctx, entry);
+  if (s === 'balance-sheet-template') return renderBalanceSheet(ctx, entry);
+  if (s === 'accounts-receivable-aging') return renderAging(ctx, entry, false);
+  if (s === 'accounts-payable-aging') return renderAging(ctx, entry, true);
+  if (s === 'budget-vs-actual-tracker') return renderBudgetActual(ctx, entry);
+  if (s === 'chart-of-accounts') return renderCOA(ctx, entry);
+  if (s === 'general-ledger') return renderGeneralLedger(ctx, entry);
+  return renderBookDashboard(ctx, entry);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -916,8 +1463,7 @@ function render(entry) {
     const fn = pickResumeLayout(entry.slug);
     fn(ctx, entry);
   } else if (entry.category === 'bookkeeping') {
-    const headers = entry.slug === 'mileage-log' ? ['Date', 'Odo Start', 'Odo End', 'Miles', 'Purpose'] : ['Date', 'Description', 'Category', 'Type', 'Amount'];
-    renderSpreadsheet(ctx, entry, { headers });
+    renderBookkeeping(ctx, entry);
   } else if (entry.category === 'invoice') {
     if (/quote|estimate|reminder|receipt|letter/i.test(entry.slug)) renderLetter(ctx, entry);
     else renderInvoice(ctx, entry);
