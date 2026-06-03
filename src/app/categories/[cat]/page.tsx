@@ -17,10 +17,13 @@ export async function generateMetadata({ params }: { params: Promise<{ cat: stri
   const { cat } = await params;
   const c = getCategory(cat as Category);
   if (!c) return {};
+  const og = `/og/category/${c.id}.png`;
   return {
     title: c.title,
     description: c.description,
     alternates: { canonical: `${siteConfig.url}/categories/${c.id}` },
+    openGraph: { title: c.title, description: c.description, images: [{ url: og, width: 1200, height: 630, alt: c.title }] },
+    twitter: { card: 'summary_large_image', title: c.title, description: c.description, images: [og] },
   };
 }
 

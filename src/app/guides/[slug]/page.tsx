@@ -18,10 +18,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const g = getGuide(slug);
   if (!g) return {};
+  const og = `/og/guide/${g.slug}.png`;
   return {
     title: g.title,
     description: g.description,
     alternates: { canonical: `${siteConfig.url}/guides/${g.slug}` },
+    openGraph: { type: 'article', title: g.title, description: g.description, images: [{ url: og, width: 1200, height: 630, alt: g.title }] },
+    twitter: { card: 'summary_large_image', title: g.title, description: g.description, images: [og] },
   };
 }
 
