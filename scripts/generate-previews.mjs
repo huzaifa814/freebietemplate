@@ -1947,6 +1947,90 @@ function renderEducationCat(ctx, entry) {
   return eduLesson(ctx, entry, accent);
 }
 
+// ============================================================
+//  Email signature previews — distinct signature styles
+// ============================================================
+function sigHeader(ctx, entry) { text(ctx, entry.title, W / 2, 86, { size: 23, weight: '800', align: 'center' }); text(ctx, 'Copy & paste into Gmail, Outlook, or Apple Mail', W / 2, 116, { size: 13, color: MUTED, align: 'center' }); }
+function sigFootBand(ctx) { box(ctx, 0, H - 90, W, 90, '#fffbeb'); text(ctx, 'FREE  ·  HTML + Google Docs versions  ·  Renders in every email client', W / 2, H - 45, { size: 13, color: '#92400e', align: 'center' }); watermark(ctx); }
+function socialIcons(ctx, x, y, accent, r) {
+  const items = [['in', '#0a66c2'], ['f', '#1877f2'], ['ig', '#e1306c'], ['x', '#111827'], ['@', accent[0]]];
+  items.forEach((s, i) => { const cx = x + i * (r * 2 + 12) + r; ctx.fillStyle = s[1]; ctx.beginPath(); ctx.arc(cx, y, r, 0, Math.PI * 2); ctx.fill(); text(ctx, s[0], cx, y + r * 0.34, { size: r * 0.85, weight: '700', color: '#fff', align: 'center' }); });
+}
+function sigContact(ctx, x, y, nm, accent, gap) {
+  text(ctx, 'P   ' + phoneFor('x' + nm.full), x, y, { size: 12 });
+  text(ctx, 'E   ' + emailFor(nm), x, y + gap, { size: 12 });
+  text(ctx, 'W   acme.example.com', x, y + gap * 2, { size: 12, color: accent[0] });
+}
+function sigPhoto(ctx, entry, accent) {
+  paper(ctx); sigHeader(ctx, entry);
+  const nm = nameFor(entry.slug), cx = 90, cy = 178, cw = W - 180, ch = 280;
+  rrect(ctx, cx, cy, cw, ch, 16, '#fff', LINE);
+  avatarCircle(ctx, cx + 104, cy + ch / 2, 64, null, [accent[0], accent[1]]);
+  box(ctx, cx + 210, cy + 40, 3, ch - 80, accent[0]);
+  text(ctx, nm.full, cx + 238, cy + 92, { size: 24, weight: '700' });
+  text(ctx, titleForResume(entry.slug), cx + 238, cy + 120, { size: 13, color: MUTED });
+  text(ctx, 'Acme Corporation', cx + 238, cy + 150, { size: 13, weight: '600', color: accent[0] });
+  sigContact(ctx, cx + 238, cy + 186, nm, accent, 24);
+  sigFootBand(ctx);
+}
+function sigBanner(ctx, entry, accent) {
+  paper(ctx); sigHeader(ctx, entry);
+  const nm = nameFor(entry.slug), cx = 90, cy = 178, cw = W - 180, ch = 300;
+  rrect(ctx, cx, cy, cw, ch, 16, '#fff', LINE);
+  rrect(ctx, cx, cy, cw, 96, 16, accent[0]); box(ctx, cx, cy + 80, cw, 16, accent[0]);
+  text(ctx, nm.full, cx + 30, cy + 46, { size: 25, weight: '800', color: '#fff' });
+  text(ctx, titleForResume(entry.slug) + '   ·   Acme Corporation', cx + 30, cy + 74, { size: 13, color: '#ffffffdd' });
+  sigContact(ctx, cx + 30, cy + 140, nm, accent, 26);
+  socialIcons(ctx, cx + 30, cy + 250, accent, 15);
+  sigFootBand(ctx);
+}
+function sigMinimal(ctx, entry, accent) {
+  paper(ctx); sigHeader(ctx, entry);
+  const nm = nameFor(entry.slug), cx = 130, cy = 220;
+  text(ctx, 'Best regards,', cx, cy, { size: 14, color: MUTED, italic: true });
+  text(ctx, nm.full, cx, cy + 52, { size: 23, weight: '800' });
+  text(ctx, titleForResume(entry.slug) + '   |   Acme Corporation', cx, cy + 80, { size: 13, color: MUTED });
+  box(ctx, cx, cy + 100, 280, 3, accent[0]);
+  text(ctx, phoneFor(entry.slug) + '     ·     ' + emailFor(nm), cx, cy + 134, { size: 12.5, color: '#374151' });
+  text(ctx, 'acme.example.com', cx, cy + 158, { size: 12.5, color: accent[0] });
+  sigFootBand(ctx);
+}
+function sigCorporate(ctx, entry, accent) {
+  paper(ctx); sigHeader(ctx, entry);
+  const nm = nameFor(entry.slug), cx = 90, cy = 188, cw = W - 180, ch = 250;
+  rrect(ctx, cx, cy, cw, ch, 12, '#fff', LINE);
+  rrect(ctx, cx + 30, cy + 55, 120, 120, 12, accent[0]); text(ctx, nm.initials, cx + 90, cy + 132, { size: 42, weight: '800', color: '#fff', align: 'center' });
+  box(ctx, cx + 184, cy + 44, 2, ch - 88, '#e5e7eb');
+  const tx = cx + 214;
+  text(ctx, nm.full, tx, cy + 74, { size: 22, weight: '700' });
+  text(ctx, titleForResume(entry.slug), tx, cy + 100, { size: 13, color: MUTED });
+  text(ctx, 'ACME CORPORATION', tx, cy + 130, { size: 12, weight: '800', color: accent[0] });
+  [['Tel', phoneFor(entry.slug)], ['Email', emailFor(nm)], ['Web', 'acme.example.com']].forEach(([k, v], i) => { text(ctx, k, tx, cy + 166 + i * 24, { size: 11, weight: '700', color: MUTED }); text(ctx, v, tx + 52, cy + 166 + i * 24, { size: 12 }); });
+  sigFootBand(ctx);
+}
+function sigSocial(ctx, entry, accent) {
+  paper(ctx); sigHeader(ctx, entry);
+  const nm = nameFor(entry.slug), cx = 90, cy = 188, cw = W - 180, ch = 250;
+  rrect(ctx, cx, cy, cw, ch, 16, '#fff', LINE);
+  rrect(ctx, cx, cy, 8, ch, 4, accent[0]);
+  text(ctx, nm.full, cx + 44, cy + 64, { size: 26, weight: '800' });
+  text(ctx, titleForResume(entry.slug) + '   ·   Acme Corporation', cx + 44, cy + 94, { size: 13, color: MUTED });
+  text(ctx, emailFor(nm) + '     ·     ' + phoneFor(entry.slug), cx + 44, cy + 130, { size: 12.5, color: '#374151' });
+  text(ctx, 'Connect with me:', cx + 44, cy + 172, { size: 12, color: MUTED, weight: '600' });
+  socialIcons(ctx, cx + 44, cy + 202, accent, 18);
+  sigFootBand(ctx);
+}
+const SIG_ROUND = [sigPhoto, sigBanner, sigCorporate, sigSocial, sigMinimal];
+const SIG_ORDER = entries.filter((e) => e.category === 'email').map((e) => e.slug);
+function renderEmailCat(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, SIG_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 1) % BK_ACCENTS.length];
+  if (/minimal|plain-text/.test(s)) return sigMinimal(ctx, entry, accent);
+  if (/photo|healthcare|real-estate|realtor|teacher/.test(s)) return sigPhoto(ctx, entry, accent);
+  if (/social|influencer|creative|marketing|agency|photographer|freelanc/.test(s)) return sigSocial(ctx, entry, accent);
+  if (/executive|law|banking|finance|professional|founder|recruiter/.test(s)) return sigCorporate(ctx, entry, accent);
+  return SIG_ROUND[idx % SIG_ROUND.length](ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -1967,7 +2051,7 @@ function render(entry) {
     renderBusiness(ctx, entry);
   } else if (entry.category === 'education') {
     renderEducationCat(ctx, entry);
-  } else if (entry.category === 'email') renderEmailSig(ctx, entry);
+  } else if (entry.category === 'email') renderEmailCat(ctx, entry);
   else renderBusinessDoc(ctx, entry);
 
   return canvas.encode('png');
