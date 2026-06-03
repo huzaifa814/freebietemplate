@@ -15,6 +15,7 @@ export interface Guide {
   intro: string;
   sections: GuideSection[];
   relatedSlugs: string[]; // template slugs to recommend
+  howto?: boolean; // step-by-step guide → emits HowTo structured data
 }
 
 export const guides: Guide[] = [
@@ -137,6 +138,160 @@ export const guides: Guide[] = [
       { h: 'Celebrate effort, then fade it out', p: ['Once a habit sticks, you can quietly retire the chart for that behavior and start a new one. The goal is a confident kid, not a forever chart.'] },
     ],
     relatedSlugs: ['reward-chart', 'kids-chore-chart', 'blank-sticker-chart', 'kids-behavior-chart'],
+  },
+  {
+    slug: 'how-to-track-business-expenses',
+    title: 'How to Track Business Expenses (the Simple Way)',
+    description: 'A simple system for tracking business expenses so tax time is painless — with free expense and bookkeeping templates.',
+    updated: '2026-06-03', readMinutes: 4, howto: true,
+    intro: 'Tracking expenses well does two things: it lowers your tax bill (you claim every deduction) and it shows you where the money actually goes. Here is a system that takes minutes a week.',
+    sections: [
+      { h: 'Step 1 — Separate business and personal', p: ['Open a dedicated business bank account or card. Mixing personal and business spending is the #1 cause of messy books and missed deductions.'] },
+      { h: 'Step 2 — Log expenses weekly, not yearly', p: ['Set a 15-minute weekly slot to enter receipts. Our Income & Expense Tracker uses category dropdowns and auto-totals so this stays quick.'] },
+      { h: 'Step 3 — Categorize for Schedule C', p: ['Group expenses into standard categories (software, supplies, travel, meals) so they map cleanly to your tax forms. The Small Business Bookkeeping workbook is pre-set up this way.'] },
+      { h: 'Step 4 — Keep your receipts', p: ['Snap a photo of every receipt and note the business purpose. The Employee Expense Report template includes a receipts column and approval row.'] },
+    ],
+    relatedSlugs: ['income-expense-tracker', 'small-business-bookkeeping', 'expense-report', 'mileage-log'],
+  },
+  {
+    slug: 'how-to-create-an-invoice',
+    title: 'How to Create an Invoice That Gets Paid Fast',
+    description: 'Step-by-step: what to put on an invoice, how to set terms, and a free invoice template to send in minutes.',
+    updated: '2026-06-03', readMinutes: 3, howto: true,
+    intro: 'A clear invoice gets paid faster. Here is exactly what to include and how to send one that leaves no room for confusion.',
+    sections: [
+      { h: 'Step 1 — Add your details and a number', p: ['Put your business name, contact info, and a unique invoice number at the top. Numbering keeps your records straight and looks professional.'] },
+      { h: 'Step 2 — List the work, itemized', p: ['Break the work into line items with description, quantity, rate, and amount. Vague invoices invite questions and delays.'] },
+      { h: 'Step 3 — Show totals and tax clearly', p: ['Subtotal, any tax, and a bold total. Our invoice templates calculate these automatically once you fill in the line items.'] },
+      { h: 'Step 4 — State payment terms and how to pay', p: ['Add the due date (e.g. "Net 15"), accepted payment methods, and any late fee. Clear terms mean fewer awkward follow-ups.'] },
+    ],
+    relatedSlugs: ['fitness-trainer-invoice', '1099-self-employed-tracker', 'client-tracker'],
+  },
+  {
+    slug: 'how-to-pay-off-debt-fast',
+    title: 'How to Pay Off Debt Fast (Snowball vs Avalanche)',
+    description: 'The two proven debt-payoff methods explained, plus free trackers to pick a plan and watch your balances fall.',
+    updated: '2026-06-03', readMinutes: 4, howto: true,
+    intro: 'Getting out of debt comes down to a clear plan and momentum. The two best-known methods are the snowball and the avalanche — here is how to choose and stick with one.',
+    sections: [
+      { h: 'Step 1 — List every debt', p: ['Write down each balance, interest rate, and minimum payment. You cannot beat what you have not measured.'] },
+      { h: 'Step 2 — Pick snowball or avalanche', p: ['Snowball pays the smallest balance first for quick motivating wins. Avalanche pays the highest interest first to save the most money. Both work — pick the one you will actually stick to.'] },
+      { h: 'Step 3 — Throw every extra dollar at one debt', p: ['Pay minimums on everything, then put all extra money toward your target debt. When it is gone, roll that payment to the next one.'] },
+      { h: 'Step 4 — Track it so you can see progress', p: ['Our Debt Snowball Tracker shows your payoff date and interest saved updating as you go — seeing the finish line is what keeps you going.'] },
+    ],
+    relatedSlugs: ['debt-snowball-payoff', 'debt-payoff-tracker', 'personal-monthly-budget', 'emergency-fund-tracker'],
+  },
+  {
+    slug: 'how-to-build-an-emergency-fund',
+    title: 'How to Build an Emergency Fund',
+    description: 'How much to save, where to keep it, and how to get there — with a free emergency fund tracker.',
+    updated: '2026-06-03', readMinutes: 3, howto: true,
+    intro: 'An emergency fund is the financial cushion that turns a crisis into an inconvenience. Here is how to build one without feeling deprived.',
+    sections: [
+      { h: 'Step 1 — Start with a $1,000 starter fund', p: ['Before anything else, save a small starter buffer. It stops a flat tire or vet bill from becoming new debt.'] },
+      { h: 'Step 2 — Aim for 3–6 months of expenses', p: ['Add up your essential monthly costs and multiply. The Emergency Fund Tracker calculates your target and shows how many months you have covered.'] },
+      { h: 'Step 3 — Automate the saving', p: ['Set an automatic transfer the day after payday. Money you never see is money you never miss.'] },
+      { h: 'Step 4 — Keep it separate but accessible', p: ['A high-yield savings account is ideal — separate from your checking so you are not tempted, but available within a day or two.'] },
+    ],
+    relatedSlugs: ['emergency-fund-tracker', 'savings-goal-tracker', 'personal-monthly-budget', 'sinking-funds-planner'],
+  },
+  {
+    slug: 'how-to-write-a-cover-letter',
+    title: 'How to Write a Cover Letter (with a Free Template)',
+    description: 'A simple four-paragraph cover letter formula that actually gets read — plus a free cover letter template.',
+    updated: '2026-06-03', readMinutes: 3, howto: true,
+    intro: 'A good cover letter is short, specific, and about them — not you. Use this four-paragraph structure and you will never stare at a blank page again.',
+    sections: [
+      { h: 'Step 1 — Open with why this role', p: ['Name the role and one genuine reason you are excited about this company specifically. Skip "To whom it may concern."'] },
+      { h: 'Step 2 — Prove you can do the job', p: ['Pick one or two achievements that match the posting and quantify them. Mirror the language of the job description.'] },
+      { h: 'Step 3 — Connect to the company', p: ['Show you understand what they do and how you would contribute. One or two sentences is enough.'] },
+      { h: 'Step 4 — Close with a clear next step', p: ['Thank them, restate your interest, and say you would welcome a conversation. Our Cover Letter Pack gives you three matching designs to start from.'] },
+    ],
+    relatedSlugs: ['cover-letter-pack', 'minimalist-resume', 'ats-friendly-pro-resume'],
+  },
+  {
+    slug: 'how-to-make-a-chore-chart-that-works',
+    title: 'How to Make a Chore Chart That Actually Works',
+    description: 'Get kids to help out without nagging — a simple chore chart system, plus free printable chore and reward charts.',
+    updated: '2026-06-03', readMinutes: 3, howto: true,
+    intro: 'Chore charts fail when they are too complicated or inconsistent. Keep it simple and visual and kids will buy in. Here is how.',
+    sections: [
+      { h: 'Step 1 — Match chores to age', p: ['Give kids tasks they can actually do alone. Two or three age-appropriate chores beat a long list nobody finishes.'] },
+      { h: 'Step 2 — Make it visual', p: ['A chart on the fridge with checkboxes or stars makes progress obvious. Our printable Kids Chore Chart is built for exactly this.'] },
+      { h: 'Step 3 — Tie it to a reward', p: ['Stars toward a small prize or screen time work well. Keep the reward reachable within a week.'] },
+      { h: 'Step 4 — Be consistent', p: ['Check the chart at the same time each day. Consistency is what turns a chore into a habit.'] },
+    ],
+    relatedSlugs: ['kids-chore-chart', 'reward-chart', 'blank-sticker-chart', 'allowance-tracker'],
+  },
+  {
+    slug: 'how-to-meal-plan-for-the-week',
+    title: 'How to Meal Plan for the Week (and Save Money)',
+    description: 'A simple weekly meal-planning routine that cuts your grocery bill and the daily "what’s for dinner" stress.',
+    updated: '2026-06-03', readMinutes: 3, howto: true,
+    intro: 'Meal planning saves money, time, and decision fatigue. It takes about 20 minutes a week once you have a system. Here it is.',
+    sections: [
+      { h: 'Step 1 — Check what you already have', p: ['Start with your fridge, freezer, and pantry. Planning around what you own cuts waste and your bill.'] },
+      { h: 'Step 2 — Plan around your week', p: ['Match easy meals to busy nights and bigger cooks to free evenings. Fill in the Healthy Meal Planner for all seven days.'] },
+      { h: 'Step 3 — Build the grocery list as you go', p: ['Add ingredients to a list grouped by aisle so shopping is fast. Our Grocery Shopping List is organized this way.'] },
+      { h: 'Step 4 — Prep ahead where you can', p: ['Wash, chop, or batch-cook on a free day. Future-you will be grateful at 6pm on a Tuesday.'] },
+    ],
+    relatedSlugs: ['healthy-meal-planner', 'weekly-meal-prep', 'grocery-shopping-list', 'personal-monthly-budget'],
+  },
+  {
+    slug: 'how-to-create-a-content-calendar',
+    title: 'How to Create a Social Media Content Calendar',
+    description: 'Post consistently without the daily scramble — how to build a content calendar, plus free social media templates.',
+    updated: '2026-06-03', readMinutes: 4, howto: true,
+    intro: 'Consistency beats virality. A content calendar turns "what do I post today?" into a plan you execute. Here is how to build one.',
+    sections: [
+      { h: 'Step 1 — Define your content pillars', p: ['Pick 3–5 themes you post about (e.g. tips, behind-the-scenes, results, personal). The Content Pillar Planner helps you map these.'] },
+      { h: 'Step 2 — Batch your ideas', p: ['Brainstorm a month of posts at once into a Content Idea Bank, tagged by pillar and format. Batching beats daily inspiration-hunting.'] },
+      { h: 'Step 3 — Schedule by date and platform', p: ['Drop ideas onto a calendar with caption, hashtags, and status. The Social Media Content Calendar tracks all of this in one view.'] },
+      { h: 'Step 4 — Review what works', p: ['Track engagement per post and double down on what resonates. The Engagement Tracker makes the pattern obvious.'] },
+    ],
+    relatedSlugs: ['social-media-content-calendar', 'content-pillar-planner', 'content-idea-bank', 'engagement-tracker'],
+  },
+  {
+    slug: 'how-to-organize-your-finances',
+    title: 'How to Organize Your Finances in a Weekend',
+    description: 'A weekend plan to get your money organized — budget, bills, debt, and savings — with free templates for each piece.',
+    updated: '2026-06-03', readMinutes: 4, howto: true,
+    intro: 'You do not need an app subscription to take control of your money — just a couple of hours and a few simple sheets. Here is the weekend plan.',
+    sections: [
+      { h: 'Step 1 — See the full picture', p: ['List your income, accounts, debts, and recurring bills. The Net Worth Tracker gives you a single number to anchor on.'] },
+      { h: 'Step 2 — Build a budget', p: ['Assign every dollar a job with a monthly budget. The 50/30/20 Budget Planner is the fastest place to start.'] },
+      { h: 'Step 3 — Get bills under control', p: ['List every bill with its due date so nothing slips. The Bill Payment Tracker shows what is outstanding at a glance.'] },
+      { h: 'Step 4 — Set one savings goal', p: ['Pick one goal — emergency fund, trip, debt — and automate toward it. Momentum on one goal beats vague intentions on five.'] },
+    ],
+    relatedSlugs: ['personal-monthly-budget', '50-30-20-budget', 'bill-pay-tracker', 'net-worth-tracker'],
+  },
+  {
+    slug: 'best-free-templates-for-etsy-sellers',
+    title: 'The Best Free Templates for Etsy & Online Sellers',
+    description: 'Run your online shop on free tools — bookkeeping, profit-per-order, inventory, and invoices for handmade and resale sellers.',
+    updated: '2026-06-03', readMinutes: 3,
+    intro: 'Selling online means thin margins and lots of small numbers. These free templates keep your shop profitable and your books tax-ready.',
+    sections: [
+      { h: 'Track profit per order', p: ['Fees, shipping, and materials eat margin fast. The Online Seller Bookkeeping workbook computes net profit per order after every cost.'] },
+      { h: 'Watch your inventory', p: ['Know what is in stock and what to reorder. The Inventory Tracker flags reorder points and values stock at cost.'] },
+      { h: 'Keep clean books for taxes', p: ['As a 1099 seller, organized books save real money. The 1099 / Self-Employed Tracker maps to Schedule C and estimates quarterly taxes.'] },
+      { h: 'Invoice wholesale and custom orders', p: ['For custom or wholesale work, send a proper invoice. Our invoice templates handle line items and totals automatically.'] },
+    ],
+    relatedSlugs: ['etsy-seller-bookkeeping', 'inventory-tracker', '1099-self-employed-tracker', 'shopify-seller-bookkeeping'],
+  },
+  {
+    slug: 'best-free-planner-templates-for-students',
+    title: 'The Best Free Planner Templates for Students',
+    description: 'Stay on top of classes, assignments, and study time with free student planners, reading logs, and budgets.',
+    updated: '2026-06-03', readMinutes: 3,
+    intro: 'The right planner is the difference between cramming and coasting. These free templates help students manage time, money, and reading.',
+    sections: [
+      { h: 'Plan your study time', p: ['Block out classes, assignments, and study sessions so nothing sneaks up on you. Our study and weekly planners keep the semester visible.'] },
+      { h: 'Track your reading', p: ['Log books and minutes to build a steady habit — useful for assigned reading and personal growth alike.'] },
+      { h: 'Budget your money', p: ['Student budgets are tight. The Personal Monthly Budget and Savings Goal Tracker help you stretch every dollar.'] },
+      { h: 'Polish your resume early', p: ['Internships and first jobs come fast. The Student / Entry-Level Resume is built for exactly that.'] },
+    ],
+    relatedSlugs: ['student-entry-level-resume', 'personal-monthly-budget', 'kids-reading-log', 'savings-goal-tracker'],
   },
 ];
 

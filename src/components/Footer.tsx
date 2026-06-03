@@ -17,6 +17,8 @@ export function Footer() {
             <h3 className="font-semibold text-sm mb-3">Templates</h3>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               {navConfig.main.map((item) => <li key={item.href}><Link href={item.href} className="hover:text-gray-900 dark:hover:text-white transition">{item.title}</Link></li>)}
+              <li><Link href="/for" className="hover:text-gray-900 dark:hover:text-white transition">By Profession</Link></li>
+              <li><Link href="/seasonal" className="hover:text-gray-900 dark:hover:text-white transition">Seasonal</Link></li>
             </ul>
           </div>
           <div>

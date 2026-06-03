@@ -4,3 +4,6 @@ out/
 *.log
 .DS_Store
 .env*.local
+
+# Local chat/session backups (not for the public repo)
+docs/session-logs/

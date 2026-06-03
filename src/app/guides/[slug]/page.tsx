@@ -42,16 +42,23 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           { '@type': 'ListItem', position: 3, name: g.title, item: `${siteConfig.url}/guides/${g.slug}` },
         ],
       },
-      {
-        '@type': 'Article',
-        headline: g.title,
-        description: g.description,
-        datePublished: g.updated,
-        dateModified: g.updated,
-        author: { '@type': 'Organization', name: siteConfig.name },
-        publisher: { '@type': 'Organization', name: siteConfig.name },
-        mainEntityOfPage: `${siteConfig.url}/guides/${g.slug}`,
-      },
+      g.howto
+        ? {
+            '@type': 'HowTo',
+            name: g.title,
+            description: g.description,
+            step: g.sections.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, name: s.h, text: s.p.join(' ') })),
+          }
+        : {
+            '@type': 'Article',
+            headline: g.title,
+            description: g.description,
+            datePublished: g.updated,
+            dateModified: g.updated,
+            author: { '@type': 'Organization', name: siteConfig.name },
+            publisher: { '@type': 'Organization', name: siteConfig.name },
+            mainEntityOfPage: `${siteConfig.url}/guides/${g.slug}`,
+          },
     ],
   };
 
