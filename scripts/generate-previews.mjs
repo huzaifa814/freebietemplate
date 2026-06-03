@@ -1453,6 +1453,198 @@ function renderBookkeeping(ctx, entry) {
   return renderBookDashboard(ctx, entry);
 }
 
+// ============================================================
+//  Invoice & quote previews — multiple distinct designs
+// ============================================================
+const INV_PROFILES = {
+  creative: { biz: 'Creative Studio', bill: 'Northwind Co.', billAddr: ['500 Market St', 'Austin, TX 78701'], note: 'Thank you! Payment due within 14 days.', sub: 6420,
+    items: [['Brand identity — discovery & strategy', '1', '$2,400', '$2,400'], ['Logo & mark design — 3 directions', '1', '$1,800', '$1,800'], ['Type system & color palette', '1', '$900', '$900'], ['Brand guidelines PDF (20 pp)', '1', '$750', '$750'], ['Project management & revisions', '6 hrs', '$95', '$570']] },
+  trades: { biz: 'Home Services LLC', bill: 'M. Rivera', billAddr: ['88 Pine Ave', 'Denver, CO 80202'], note: 'Payment due on completion. Parts warrantied 1 year.', sub: 1386,
+    items: [['Service call & diagnostic', '1', '$95', '$95'], ['Labor', '5 hrs', '$120', '$600'], ['Parts & materials', '1', '$486', '$486'], ['Equipment & disposal', '1', '$120', '$120'], ['Permit fee', '1', '$85', '$85']] },
+  pro: { biz: '& Associates', bill: 'Bright LLC', billAddr: ['12 Madison Ave', 'New York, NY 10010'], note: 'Net 30. Please reference the invoice number with payment.', sub: 3900,
+    items: [['Consultation & intake', '2.0 hrs', '$250', '$500'], ['Research & analysis', '6.5 hrs', '$250', '$1,625'], ['Drafting & preparation', '4.0 hrs', '$250', '$1,000'], ['Review & revisions', '2.5 hrs', '$250', '$625'], ['Filing & admin', '1.0 hr', '$150', '$150']] },
+  events: { biz: 'Events & Co.', bill: 'The Hartley Wedding', billAddr: ['Rosewood Estate', 'Napa, CA 94558'], note: 'Balance due 14 days before event. Deposit non-refundable.', sub: 4680,
+    items: [['Coverage package — 8 hours', '1', '$2,800', '$2,800'], ['Second shooter', '1', '$650', '$650'], ['Engagement session', '1', '$450', '$450'], ['Album — 30 pages', '1', '$600', '$600'], ['Travel', '1', '$180', '$180']] },
+  generic: { biz: 'Company', bill: 'Acme Corporation', billAddr: ['500 Tech Park Dr', 'San Jose, CA 95110'], note: 'Thank you for your business. Net 30 days.', sub: 2195,
+    items: [['Professional services', '1', '$1,500', '$1,500'], ['Additional work', '3 hrs', '$120', '$360'], ['Materials', '1', '$240', '$240'], ['Expenses', '1', '$95', '$95']] },
+};
+function invProfile(slug) {
+  if (/photo|wedding|dj|catering|event|music|massage|groomer|fitness/.test(slug)) return 'events';
+  if (/plumber|electric|hvac|handyman|mechanic|landscap|clean|contractor|construction|detailing|auto/.test(slug)) return 'trades';
+  if (/attorney|legal|accountant|consult|tutor|notary|tax|advisor|medical/.test(slug)) return 'pro';
+  if (/design|graphic|web|brand|marketing|interior|creative/.test(slug)) return 'creative';
+  return 'generic';
+}
+const usd = (n) => '$' + n.toLocaleString('en-US');
+function invMeta(slug) { const h = hash(slug); return { no: 'INV-' + (1000 + h % 9000), date: 'Jun 2, 2026', due: 'Jul 2, 2026' }; }
+
+function invItemsTable(ctx, x, y, w, items, accent, filled) {
+  const ax = x + w - 14, rx = x + w - 110, qx = x + w - 200;
+  if (filled) {
+    rrect(ctx, x, y, w, 36, 6, accent[0]);
+    text(ctx, 'Description', x + 14, y + 23, { size: 12, weight: '700', color: '#fff' });
+    text(ctx, 'Qty', qx, y + 23, { size: 12, weight: '700', color: '#fff', align: 'right' });
+    text(ctx, 'Rate', rx, y + 23, { size: 12, weight: '700', color: '#fff', align: 'right' });
+    text(ctx, 'Amount', ax, y + 23, { size: 12, weight: '700', color: '#fff', align: 'right' });
+  } else {
+    text(ctx, 'DESCRIPTION', x + 14, y + 18, { size: 11, weight: '700', color: MUTED });
+    text(ctx, 'QTY', qx, y + 18, { size: 11, weight: '700', color: MUTED, align: 'right' });
+    text(ctx, 'RATE', rx, y + 18, { size: 11, weight: '700', color: MUTED, align: 'right' });
+    text(ctx, 'AMOUNT', ax, y + 18, { size: 11, weight: '700', color: MUTED, align: 'right' });
+    rule(ctx, x, y + 30, x + w, accent[0], 1.5);
+  }
+  const top = y + (filled ? 36 : 34);
+  items.forEach((it, i) => {
+    const ry = top + i * 40;
+    if (filled && i % 2 === 1) box(ctx, x, ry, w, 40, SOFT);
+    text(ctx, fitText(ctx, it[0], qx - x - 24, 12, ''), x + 14, ry + 25, { size: 12, color: '#374151' });
+    text(ctx, it[1], qx, ry + 25, { size: 12, color: '#374151', align: 'right' });
+    text(ctx, it[2], rx, ry + 25, { size: 12, color: '#374151', align: 'right' });
+    text(ctx, it[3], ax, ry + 25, { size: 12, color: INK, weight: '600', align: 'right' });
+    rule(ctx, x, ry + 40, x + w, '#eef0f2', 1);
+  });
+  return top + items.length * 40;
+}
+function invTotals(ctx, left, right, yTop, sub, accent, label = 'TOTAL DUE') {
+  const tax = Math.round(sub * 0.085), total = sub + tax;
+  text(ctx, 'Subtotal', left, yTop, { size: 13, color: MUTED });
+  text(ctx, usd(sub), right, yTop, { size: 13, align: 'right' });
+  text(ctx, 'Tax (8.5%)', left, yTop + 24, { size: 13, color: MUTED });
+  text(ctx, usd(tax), right, yTop + 24, { size: 13, align: 'right' });
+  rule(ctx, left, yTop + 40, right, '#e5e7eb', 1);
+  rrect(ctx, left - 14, yTop + 52, right - left + 28, 46, 8, accent[3]);
+  text(ctx, label, left, yTop + 81, { size: 14, weight: '800' });
+  text(ctx, usd(total), right, yTop + 81, { size: 18, weight: '800', align: 'right', color: accent[0] });
+}
+function invFrom(ctx, x, y, entry, p, big) {
+  const nm = nameFor(entry.slug);
+  text(ctx, nm.last + ' ' + p.biz, x, y, { size: big ? 16 : 14, weight: '700' });
+  [cityFor(entry.slug), emailFor(nm)].forEach((l, i) => text(ctx, l, x, y + 20 + i * 17, { size: 12, color: MUTED }));
+}
+
+function invModern(ctx, entry, p, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 10, accent[0]);
+  ctx.fillStyle = accent[0]; ctx.beginPath(); ctx.arc(66, 96, 28, 0, Math.PI * 2); ctx.fill();
+  text(ctx, p.biz[0], 66, 105, { size: 24, weight: '800', color: '#fff', align: 'center' });
+  invFrom(ctx, 110, 90, entry, p, true);
+  text(ctx, 'INVOICE', W - 40, 86, { size: 42, weight: '800', color: accent[0], align: 'right' });
+  const m = invMeta(entry.slug);
+  [['Invoice #', m.no], ['Date', m.date], ['Due', m.due]].forEach(([k, v], i) => { text(ctx, k, W - 230, 120 + i * 22, { size: 12, weight: '700', color: MUTED }); text(ctx, v, W - 40, 120 + i * 22, { size: 12, align: 'right', weight: '600' }); });
+  text(ctx, 'BILL TO', 40, 250, { size: 11, weight: '800', color: accent[0] });
+  text(ctx, p.bill, 40, 274, { size: 14, weight: '700' });
+  p.billAddr.forEach((l, i) => text(ctx, l, 40, 294 + i * 17, { size: 12, color: MUTED }));
+  const ty = invItemsTable(ctx, 40, 360, W - 80, p.items, accent, true);
+  invTotals(ctx, W - 250, W - 40, ty + 26, p.sub, accent);
+  text(ctx, p.note, 40, H - 50, { size: 12, color: MUTED });
+  text(ctx, entry.title, 40, H - 26, { size: 12, weight: '700', color: accent[0] });
+  watermark(ctx);
+}
+function invClassic(ctx, entry, p, accent) {
+  paper(ctx);
+  const m = invMeta(entry.slug), nm = nameFor(entry.slug);
+  text(ctx, 'INVOICE', W / 2, 84, { size: 36, weight: '800', align: 'center', serif: true });
+  rule(ctx, W / 2 - 60, 100, W / 2 + 60, accent[0], 2);
+  text(ctx, nm.last + ' ' + p.biz, W / 2, 132, { size: 15, weight: '700', align: 'center', serif: true });
+  text(ctx, cityFor(entry.slug) + '   ·   ' + emailFor(nm), W / 2, 154, { size: 12, color: MUTED, align: 'center' });
+  text(ctx, 'BILLED TO', 60, 224, { size: 11, weight: '700', color: MUTED });
+  text(ctx, p.bill, 60, 248, { size: 14, weight: '700' });
+  p.billAddr.forEach((l, i) => text(ctx, l, 60, 268 + i * 17, { size: 12, color: MUTED }));
+  [['Invoice #', m.no], ['Date', m.date], ['Due', m.due]].forEach(([k, v], i) => { text(ctx, k, W - 250, 232 + i * 22, { size: 12, color: MUTED }); text(ctx, v, W - 60, 232 + i * 22, { size: 12, align: 'right', weight: '600' }); });
+  const ty = invItemsTable(ctx, 60, 340, W - 120, p.items, accent, false);
+  invTotals(ctx, W - 280, W - 60, ty + 24, p.sub, accent, 'BALANCE DUE');
+  text(ctx, p.note, W / 2, H - 44, { size: 12, color: MUTED, align: 'center', italic: true });
+  watermark(ctx);
+}
+function invSidebar(ctx, entry, p, accent) {
+  paper(ctx);
+  const sw = 250, nm = nameFor(entry.slug), m = invMeta(entry.slug);
+  box(ctx, 0, 0, sw, H, accent[0]);
+  text(ctx, 'INVOICE', 28, 96, { size: 30, weight: '800', color: '#fff' });
+  text(ctx, m.no, 28, 126, { size: 13, color: '#ffffffcc' });
+  const tax = Math.round(p.sub * 0.085), total = p.sub + tax;
+  text(ctx, 'AMOUNT DUE', 28, H - 210, { size: 12, color: '#ffffffcc', weight: '700' });
+  text(ctx, usd(total), 28, H - 168, { size: 32, weight: '800', color: '#fff' });
+  text(ctx, 'Due ' + m.due, 28, H - 138, { size: 12, color: '#ffffffcc' });
+  text(ctx, nm.last + ' ' + p.biz, 28, H - 86, { size: 13, weight: '700', color: '#fff' });
+  text(ctx, emailFor(nm), 28, H - 66, { size: 11.5, color: '#ffffffcc' });
+  text(ctx, phoneFor(entry.slug), 28, H - 48, { size: 11.5, color: '#ffffffcc' });
+  const x = sw + 30, w = W - sw - 60;
+  text(ctx, 'BILL TO', x, 96, { size: 11, weight: '800', color: accent[0] });
+  text(ctx, p.bill, x, 120, { size: 14, weight: '700' });
+  p.billAddr.forEach((l, i) => text(ctx, l, x, 140 + i * 17, { size: 12, color: MUTED }));
+  text(ctx, 'Date: ' + m.date, x + w - 150, 96, { size: 12, color: MUTED });
+  const ty = invItemsTable(ctx, x, 210, w, p.items, accent, true);
+  invTotals(ctx, x + w - 210, x + w, ty + 24, p.sub, accent);
+  watermark(ctx);
+}
+function invMinimal(ctx, entry, p, accent) {
+  paper(ctx);
+  const nm = nameFor(entry.slug), m = invMeta(entry.slug);
+  text(ctx, 'Invoice', 50, 84, { size: 19, weight: '700', color: MUTED });
+  text(ctx, m.no, 50, 108, { size: 13, color: MUTED });
+  const tax = Math.round(p.sub * 0.085), total = p.sub + tax;
+  text(ctx, 'Amount due', W - 50, 74, { size: 13, color: MUTED, align: 'right' });
+  text(ctx, usd(total), W - 50, 116, { size: 38, weight: '800', align: 'right', color: accent[0] });
+  rule(ctx, 50, 156, W - 50, '#eceff1', 1);
+  text(ctx, 'FROM', 50, 196, { size: 10, weight: '700', color: '#9ca3af' });
+  text(ctx, nm.last + ' ' + p.biz, 50, 216, { size: 13, weight: '700' });
+  text(ctx, emailFor(nm), 50, 234, { size: 12, color: MUTED });
+  text(ctx, 'BILL TO', W / 2, 196, { size: 10, weight: '700', color: '#9ca3af' });
+  text(ctx, p.bill, W / 2, 216, { size: 13, weight: '700' });
+  text(ctx, p.billAddr[1], W / 2, 234, { size: 12, color: MUTED });
+  const ty = invItemsTable(ctx, 50, 296, W - 100, p.items, accent, false);
+  invTotals(ctx, W - 250, W - 50, ty + 28, p.sub, accent);
+  text(ctx, p.note, 50, H - 40, { size: 12, color: MUTED });
+  watermark(ctx);
+}
+function invQuote(ctx, entry, p, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 10, accent[0]);
+  const nm = nameFor(entry.slug), m = invMeta(entry.slug);
+  text(ctx, 'ESTIMATE', 40, 92, { size: 40, weight: '800', color: accent[0] });
+  text(ctx, nm.last + ' ' + p.biz, W - 40, 74, { size: 15, weight: '700', align: 'right' });
+  text(ctx, emailFor(nm), W - 40, 94, { size: 12, color: MUTED, align: 'right' });
+  text(ctx, 'Quote ' + m.no.replace('INV', 'EST'), W - 40, 114, { size: 12, color: MUTED, align: 'right' });
+  rrect(ctx, 40, 138, W - 80, 42, 8, accent[3]);
+  text(ctx, 'Valid until Jul 16, 2026', 58, 165, { size: 13, weight: '700', color: accent[0] });
+  text(ctx, 'Prepared for ' + p.bill, W - 58, 165, { size: 13, align: 'right', weight: '600' });
+  const ty = invItemsTable(ctx, 40, 214, W - 80, p.items, accent, true);
+  invTotals(ctx, W - 250, W - 40, ty + 24, p.sub, accent, 'ESTIMATED TOTAL');
+  rule(ctx, 40, H - 104, 300, '#9ca3af', 1); text(ctx, 'Accepted by (signature)', 40, H - 88, { size: 11, color: MUTED });
+  rule(ctx, W - 300, H - 104, W - 40, '#9ca3af', 1); text(ctx, 'Date', W - 300, H - 88, { size: 11, color: MUTED });
+  text(ctx, 'This is an estimate, not a bill. Pricing valid for 14 days.', 40, H - 48, { size: 12, color: MUTED, italic: true });
+  watermark(ctx);
+}
+function invReceipt(ctx, entry, p, accent) {
+  paper(ctx);
+  const nm = nameFor(entry.slug), m = invMeta(entry.slug), cw = 540, cx = (W - cw) / 2;
+  text(ctx, 'RECEIPT', W / 2, 84, { size: 32, weight: '800', align: 'center' });
+  text(ctx, nm.last + ' ' + p.biz, W / 2, 112, { size: 14, weight: '700', align: 'center' });
+  text(ctx, emailFor(nm), W / 2, 132, { size: 12, color: MUTED, align: 'center' });
+  ctx.save(); ctx.translate(W - 170, 220); ctx.rotate(-0.2);
+  ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(-72, -28, 144, 56, 8); ctx.stroke();
+  text(ctx, 'PAID', 0, 9, { size: 26, weight: '800', color: '#16a34a', align: 'center' }); ctx.restore();
+  text(ctx, 'Receipt ' + m.no.replace('INV', 'RC'), cx, 206, { size: 12, color: MUTED });
+  text(ctx, 'Date: ' + m.date, cx, 228, { size: 12, color: MUTED });
+  const ty = invItemsTable(ctx, cx, 268, cw, p.items.slice(0, 4), accent, false);
+  invTotals(ctx, cx + cw - 220, cx + cw, ty + 22, p.sub, accent, 'PAID IN FULL');
+  text(ctx, 'Payment received in full — thank you!', W / 2, H - 50, { size: 13, color: '#16a34a', align: 'center', weight: '600' });
+  watermark(ctx);
+}
+const INV_DESIGNS = [invModern, invClassic, invSidebar, invMinimal];
+const INV_ORDER = entries.filter((e) => e.category === 'invoice').map((e) => e.slug);
+function renderInvoiceCat(ctx, entry) {
+  const s = entry.slug;
+  const idx = Math.max(0, INV_ORDER.indexOf(s));
+  const accent = BK_ACCENTS[(idx * 3 + 2) % BK_ACCENTS.length];
+  const p = INV_PROFILES[invProfile(s)];
+  if (/quote|estimate|quotation/.test(s)) return invQuote(ctx, entry, p, accent);
+  if (/receipt/.test(s)) return invReceipt(ctx, entry, p, accent);
+  if (/reminder|late-payment|past-due|credit-memo/.test(s)) return renderLetter(ctx, entry);
+  return INV_DESIGNS[idx % INV_DESIGNS.length](ctx, entry, p, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -1465,8 +1657,7 @@ function render(entry) {
   } else if (entry.category === 'bookkeeping') {
     renderBookkeeping(ctx, entry);
   } else if (entry.category === 'invoice') {
-    if (/quote|estimate|reminder|receipt|letter/i.test(entry.slug)) renderLetter(ctx, entry);
-    else renderInvoice(ctx, entry);
+    renderInvoiceCat(ctx, entry);
   } else if (entry.category === 'planner') {
     if (/tracker|log|budget|debt|sinking|goal|saving|workout|reading|habit|fasting|water|medication|gift|mood|sleep|period|newborn|baby/i.test(entry.slug)) {
       const headers = ['Date', 'Item', 'Status', 'Notes', 'Value'];
