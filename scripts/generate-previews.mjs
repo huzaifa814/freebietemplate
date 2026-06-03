@@ -1892,6 +1892,61 @@ function renderBusiness(ctx, entry) {
   return bizDoc(ctx, entry, accent);
 }
 
+// ============================================================
+//  Teachers & students previews — distinct classroom layouts
+// ============================================================
+function eduFoot(ctx) { text(ctx, 'FREE  ·  Printable + editable  ·  Word / PDF + Google', W / 2, H - 18, { size: 13, color: MUTED, align: 'center' }); watermark(ctx); }
+function eduLesson(ctx, entry, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 80, accent[0]); text(ctx, entry.title, 36, 50, { size: 23, weight: '800', color: '#fff' });
+  [['Teacher', nameFor(entry.slug).full], ['Date', 'May 14, 2026'], ['Grade', '5th Grade'], ['Subject', 'Mathematics']].forEach(([label, val], i) => { const x = 40 + (i % 2) * (W / 2 - 20); const y = 124 + Math.floor(i / 2) * 52; text(ctx, label.toUpperCase(), x, y, { size: 11, weight: '700', color: '#64748b' }); text(ctx, val, x, y + 22, { size: 14 }); rule(ctx, x, y + 30, x + W / 2 - 90, '#cbd5e1', 1); });
+  const sections = [['OBJECTIVES', 'Students will be able to apply the lesson\'s key concept to solve real-world problems independently.'], ['MATERIALS', 'Printed worksheets, manipulatives, whiteboards, and the day\'s slide deck.'], ['LESSON SEQUENCE', 'Warm-up, direct instruction, guided practice in pairs, independent work, and a closing reflection.'], ['ASSESSMENT', 'Exit ticket scored 0–3; students below 2 are flagged for small-group review.']];
+  let y = 248;
+  sections.forEach(([t, b]) => { text(ctx, t, 40, y, { size: 14, weight: '800', color: accent[0] }); box(ctx, 40, y + 12, W - 80, 108, '#f9fafb', '#e5e7eb'); wrappedText(ctx, b, 58, y + 38, W - 116, 18, { size: 12, color: '#374151' }); y += 146; });
+  eduFoot(ctx);
+}
+function eduGradebook(ctx, entry, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 70, accent[0]); text(ctx, entry.title, 36, 44, { size: 23, weight: '800', color: '#fff' });
+  const cols = ['Student', 'HW 1', 'Quiz', 'Project', 'Test', 'Average'];
+  const rows = [['Avery B.', '95', '88', '92', '90', 'A−'], ['Marcus C.', '78', '82', '85', '80', 'B−'], ['Sofia D.', '100', '96', '98', '99', 'A+'], ['Liam H.', '84', '79', '88', '83', 'B'], ['Nora P.', '91', '94', '90', '93', 'A'], ['Ethan R.', '72', '68', '75', '70', 'C'], ['Maya S.', '88', '90', '86', '89', 'B+'], ['Owen T.', '96', '92', '94', '95', 'A']];
+  drawTable(ctx, 30, 100, W - 60, cols, rows, { right: [1, 2, 3, 4, 5], colorFn: (c, i) => i === 5 ? accent[0] : (i >= 1 && Number(c) < 75 ? '#dc2626' : INK), minRows: 14 });
+  eduFoot(ctx);
+}
+function eduFlashcards(ctx, entry, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 70, accent[0]); text(ctx, entry.title, 36, 44, { size: 23, weight: '800', color: '#fff' });
+  const cols = 2, rows = 4, gap = 16, cw = (W - 60 - gap) / 2, top = 100, ch = (H - top - 60 - gap * (rows - 1)) / rows;
+  for (let i = 0; i < cols * rows; i++) { const x = 30 + (i % 2) * (cw + gap), y = top + Math.floor(i / 2) * (ch + gap); rrect(ctx, x, y, cw, ch, 12, '#fff', LINE); ctx.setLineDash([4, 4]); rule(ctx, x + 16, y + ch / 2, x + cw - 16, '#d1d5db', 1); ctx.setLineDash([]); text(ctx, 'Front', x + 16, y + 24, { size: 10, weight: '700', color: accent[0] }); text(ctx, 'Back', x + 16, y + ch / 2 + 22, { size: 10, weight: '700', color: MUTED }); }
+  eduFoot(ctx);
+}
+function eduChart(ctx, entry, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 70, accent[0]); text(ctx, entry.title, 36, 44, { size: 23, weight: '800', color: '#fff' });
+  text(ctx, 'Name  __________________      Week of  ____________', 30, 100, { size: 12.5, color: '#475569' });
+  const cols = 5, rows = 6, gap = 12, top = 130, cw = (W - 60 - gap * (cols - 1)) / cols, ch = (H - top - 60 - gap * (rows - 1)) / rows;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const x = 30 + c * (cw + gap), y = top + r * (ch + gap); rrect(ctx, x, y, cw, ch, 10, (r + c) % 2 ? '#f9fafb' : '#fff', '#e5e7eb'); ctx.strokeStyle = accent[2]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + cw / 2, y + ch / 2, Math.min(cw, ch) * 0.28, 0, Math.PI * 2); ctx.stroke(); }
+  eduFoot(ctx);
+}
+function eduSyllabus(ctx, entry, accent) {
+  paper(ctx);
+  text(ctx, entry.title, 60, 90, { size: 26, weight: '800' });
+  text(ctx, 'Course  ·  Term Fall 2026  ·  Instructor: ' + nameFor(entry.slug).full, 60, 120, { size: 13, color: MUTED });
+  rule(ctx, 60, 140, W - 60, accent[0], 3);
+  drawTable(ctx, 30, 168, W - 60, ['Week', 'Topic', 'Reading', 'Due'], [['1', 'Introduction & overview', 'Ch. 1', '—'], ['2', 'Foundations', 'Ch. 2–3', 'HW 1'], ['3', 'Core concepts', 'Ch. 4', 'Quiz 1'], ['4', 'Application', 'Ch. 5', 'Project'], ['5', 'Deep dive', 'Ch. 6–7', 'HW 2'], ['6', 'Review', 'Notes', 'Midterm'], ['7', 'Advanced topics', 'Ch. 8', 'HW 3'], ['8', 'Synthesis', 'Ch. 9', 'Paper'], ['9', 'Presentations', '—', 'Slides'], ['10', 'Final review', 'All', 'Final']], { right: [], minRows: 12 });
+  eduFoot(ctx);
+}
+const EDU_ROUND = [eduLesson, eduChart, eduSyllabus];
+const EDU_ORDER = entries.filter((e) => e.category === 'education').map((e) => e.slug);
+function renderEducationCat(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, EDU_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 7) % BK_ACCENTS.length];
+  if (/gradebook|attendance|iep|report-card|progress-report|communication-log/.test(s)) return eduGradebook(ctx, entry, accent);
+  if (/flashcard|exit-ticket/.test(s)) return eduFlashcards(ctx, entry, accent);
+  if (/seating|behavior|sticker|reward|multiplication|graphic-organizer|chart/.test(s)) return eduChart(ctx, entry, accent);
+  if (/syllabus|semester|exam-study|schedule|calendar/.test(s)) return eduSyllabus(ctx, entry, accent);
+  return eduLesson(ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -1911,9 +1966,7 @@ function render(entry) {
   else if (entry.category === 'business') {
     renderBusiness(ctx, entry);
   } else if (entry.category === 'education') {
-    if (entry.slug === 'gradebook' || entry.slug === 'attendance-tracker' || entry.slug === 'iep-tracker' || entry.slug === 'exam-study-schedule') {
-      renderSpreadsheet(ctx, entry, { headers: ['Student', 'HW1', 'Quiz1', 'Midterm', 'Average'] });
-    } else renderEducation(ctx, entry);
+    renderEducationCat(ctx, entry);
   } else if (entry.category === 'email') renderEmailSig(ctx, entry);
   else renderBusinessDoc(ctx, entry);
 
