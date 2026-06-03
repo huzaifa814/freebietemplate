@@ -19,10 +19,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const t = getTemplate(slug);
   if (!t) return {};
+  const og = `/og/templates/${t.slug}.png`;
   return {
     title: t.title,
     description: t.description,
     alternates: { canonical: `${siteConfig.url}/templates/${t.slug}` },
+    openGraph: { title: t.title, description: t.description, images: [{ url: og, width: 1200, height: 630, alt: t.title }] },
+    twitter: { card: 'summary_large_image', title: t.title, description: t.description, images: [og] },
   };
 }
 
