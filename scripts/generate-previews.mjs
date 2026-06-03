@@ -1750,6 +1750,85 @@ function renderPlanner(ctx, entry) {
   return PL_ROUND[idx % PL_ROUND.length](ctx, entry, accent);
 }
 
+// ============================================================
+//  Letters & contracts previews — distinct document layouts
+// ============================================================
+function letFoot(ctx) { text(ctx, 'FREE  ·  Word (.docx) + Google Docs  ·  Edit & print', W / 2, H - 18, { size: 13, color: MUTED, align: 'center' }); watermark(ctx); }
+const DOC_FILLER = [
+  'The parties agree to the terms set forth herein and acknowledge that this section governs the rights and obligations described below.',
+  'Each party shall perform its responsibilities in good faith and in accordance with all applicable laws and regulations.',
+  'This provision shall remain in effect for the duration of the agreement unless terminated earlier in accordance with the terms herein.',
+  'Any notice required under this document shall be made in writing and delivered to the address provided by each party.',
+  'The undersigned acknowledges that they have read, understood, and agree to be bound by the terms described in this document.',
+  'In the event of a dispute, the parties shall first attempt to resolve the matter in good faith before pursuing further remedies.',
+  'This document represents the entire understanding between the parties and supersedes any prior agreements on the subject matter.',
+  'I am writing to formally address the matter described below and to request your timely attention and response.',
+];
+const pickDoc = (slug, i) => DOC_FILLER[hash(slug + 'd' + i) % DOC_FILLER.length];
+function letFormal(ctx, entry, accent) {
+  paper(ctx);
+  const nm = nameFor(entry.slug);
+  text(ctx, nm.full, 60, 84, { size: 18, weight: '700' });
+  [cityFor(entry.slug), phoneFor(entry.slug), emailFor(nm)].forEach((l, i) => text(ctx, l, 60, 108 + i * 18, { size: 12, color: MUTED }));
+  rule(ctx, 60, 176, W - 60, accent[0], 2);
+  text(ctx, 'May 14, 2026', 60, 212, { size: 12, color: MUTED });
+  let y = 252;
+  text(ctx, 'Recipient Name', 60, y, { size: 13, weight: '600' });
+  ['Title', 'Company Name', '500 Business Plaza', 'San Francisco, CA 94104'].forEach((l, i) => text(ctx, l, 60, y + 20 + i * 18, { size: 12, color: MUTED }));
+  y = 382; text(ctx, 'Dear [Recipient],', 60, y, { size: 13 }); y += 30;
+  for (let p = 0; p < 4; p++) y = wrappedText(ctx, pickDoc(entry.slug, p) + ' ' + pickDoc(entry.slug, p + 10), 60, y, W - 120, 19, { size: 12.5, color: '#374151' }) + 22;
+  y += 8; text(ctx, 'Sincerely,', 60, y, { size: 13 }); text(ctx, nm.full, 60, y + 50, { size: 18, serif: true, italic: true });
+  letFoot(ctx);
+}
+function letContract(ctx, entry, accent) {
+  paper(ctx);
+  text(ctx, entry.title.toUpperCase(), W / 2, 84, { size: 23, weight: '800', align: 'center' });
+  rule(ctx, W / 2 - 90, 102, W / 2 + 90, accent[0], 2);
+  text(ctx, 'This Agreement is entered into on May 14, 2026, by and between:', 60, 146, { size: 12.5, color: '#374151' });
+  text(ctx, 'Party A', 60, 182, { size: 12.5, weight: '700' }); rule(ctx, 150, 184, 430, '#cbd5e1', 1);
+  text(ctx, 'Party B', 60, 210, { size: 12.5, weight: '700' }); rule(ctx, 150, 212, 430, '#cbd5e1', 1);
+  let y = 256;
+  const clauses = ['Purpose & Scope', 'Term', 'Responsibilities', 'Compensation / Consideration', 'Confidentiality', 'Termination', 'Governing Law'];
+  clauses.forEach((c, i) => { text(ctx, `${i + 1}.  ${c}`, 60, y, { size: 13, weight: '700', color: accent[0] }); y = wrappedText(ctx, pickDoc(entry.slug, i), 80, y + 22, W - 140, 18, { size: 12, color: '#374151' }) + 22; });
+  const sy = H - 150;
+  rule(ctx, 60, sy, 330, '#9ca3af', 1); text(ctx, 'Party A — Signature', 60, sy + 18, { size: 11, color: MUTED });
+  text(ctx, 'Date', 60, sy + 46, { size: 11, color: MUTED }); rule(ctx, 100, sy + 50, 330, '#9ca3af', 1);
+  rule(ctx, W - 330, sy, W - 60, '#9ca3af', 1); text(ctx, 'Party B — Signature', W - 330, sy + 18, { size: 11, color: MUTED });
+  text(ctx, 'Date', W - 330, sy + 46, { size: 11, color: MUTED }); rule(ctx, W - 290, sy + 50, W - 60, '#9ca3af', 1);
+  letFoot(ctx);
+}
+function letForm(ctx, entry, accent) {
+  paper(ctx);
+  box(ctx, 0, 0, W, 80, accent[0]); text(ctx, entry.title, 36, 50, { size: 24, weight: '800', color: '#fff' });
+  const fields = ['Full Name', 'Date', 'Address', 'Phone', 'Email', 'Item / Description', 'Amount / Price', 'Reference / ID #', 'Conditions'];
+  let y = 124;
+  fields.forEach((label) => { text(ctx, label.toUpperCase(), 50, y, { size: 11, weight: '700', color: '#64748b' }); rrect(ctx, 50, y + 10, W - 100, 36, 6, '#fff', LINE); y += 60; });
+  const sy = y + 6; text(ctx, 'SIGNATURE', 50, sy, { size: 11, weight: '700', color: '#64748b' }); rule(ctx, 50, sy + 40, 360, '#9ca3af', 1);
+  text(ctx, 'DATE', W - 300, sy, { size: 11, weight: '700', color: '#64748b' }); rule(ctx, W - 300, sy + 40, W - 50, '#9ca3af', 1);
+  letFoot(ctx);
+}
+function letNotice(ctx, entry, accent) {
+  paper(ctx);
+  text(ctx, entry.title.toUpperCase(), W / 2, 124, { size: 25, weight: '800', align: 'center' });
+  rule(ctx, W / 2 - 110, 144, W / 2 + 110, accent[0], 2);
+  text(ctx, 'Date:  May 14, 2026', 60, 204, { size: 12.5, color: MUTED });
+  text(ctx, 'To:  _______________________________', 60, 238, { size: 13 });
+  let y = 296;
+  for (let p = 0; p < 3; p++) y = wrappedText(ctx, pickDoc(entry.slug, p) + ' ' + pickDoc(entry.slug, p + 20), 60, y, W - 120, 20, { size: 13, color: '#374151' }) + 26;
+  y += 36; text(ctx, 'Sincerely,', 60, y, { size: 13 });
+  rule(ctx, 60, y + 64, 330, '#9ca3af', 1); text(ctx, 'Signature', 60, y + 82, { size: 11, color: MUTED });
+  letFoot(ctx);
+}
+const LET_ROUND = [letFormal, letContract];
+const LET_ORDER = entries.filter((e) => e.category === 'letters').map((e) => e.slug);
+function renderLetters(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, LET_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 5) % BK_ACCENTS.length];
+  if (/nda|agreement|contract|non-compete|promissory|partnership|lease|sublease|roommate|addendum|power-of-attorney/.test(s)) return letContract(ctx, entry, accent);
+  if (/bill-of-sale|rental-application|photo-release|verification|authorization|consent/.test(s)) return letForm(ctx, entry, accent);
+  if (/notice|release-of-liability|two-weeks|eviction|cease|late-rent/.test(s)) return letNotice(ctx, entry, accent);
+  return letFormal(ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -1765,7 +1844,7 @@ function render(entry) {
     renderInvoiceCat(ctx, entry);
   } else if (entry.category === 'planner') {
     renderPlanner(ctx, entry);
-  } else if (entry.category === 'letters') renderLetter(ctx, entry);
+  } else if (entry.category === 'letters') renderLetters(ctx, entry);
   else if (entry.category === 'business') {
     if (/calculator|tracker|pipeline|metric|funnel|matrix|okr/i.test(entry.slug)) {
       renderSpreadsheet(ctx, entry, { headers: ['Item', 'Owner', 'Value', 'Status', 'Notes'] });
