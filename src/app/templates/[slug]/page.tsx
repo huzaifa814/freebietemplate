@@ -6,6 +6,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { JsonLd } from '@/components/JsonLd';
 import { SaveToDriveButton } from '@/components/SaveToDriveButton';
 import { templates, getTemplate, getCategory } from '@/config/templates';
+import { editorTypeFor } from '@/lib/editors';
 import { siteConfig } from '@/config/site';
 
 export const dynamicParams = false;
@@ -34,7 +35,6 @@ const formatLabel: Record<string, string> = {
   html: 'HTML',
 };
 
-const EDITABLE_SLUGS = new Set(['minimalist-resume', 'modern-two-column-resume', 'cover-letter-pack']);
 
 export default async function TemplatePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -119,7 +119,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
               💰 Free — sells for {t.etsyPrice} on Etsy
             </div>
 
-            {EDITABLE_SLUGS.has(t.slug) && (
+            {editorTypeFor(t.slug) && (
               <Link
                 href={`/templates/${t.slug}/edit`}
                 className="flex items-center justify-between mb-6 p-4 rounded-xl text-white font-semibold transition hover:opacity-90 shadow-md"
@@ -129,7 +129,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
                   <span className="text-2xl">✏️</span>
                   <span>
                     <div className="text-base">Edit in your browser</div>
-                    <div className="text-xs font-normal opacity-90">Type, see live preview, download as PDF or Word</div>
+                    <div className="text-xs font-normal opacity-90">Type, see a live preview, download a clean PDF</div>
                   </span>
                 </span>
                 <span className="text-2xl">→</span>
