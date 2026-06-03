@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { TemplateCard } from '@/components/TemplateCard';
+import { JsonLd } from '@/components/JsonLd';
 import { categories, getCategory, getTemplatesByCategory, Category } from '@/config/templates';
 import { siteConfig } from '@/config/site';
 
@@ -29,8 +30,29 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
   if (!c) return notFound();
   const list = getTemplatesByCategory(cat as Category);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: siteConfig.url },
+          { '@type': 'ListItem', position: 2, name: 'Categories', item: `${siteConfig.url}/categories` },
+          { '@type': 'ListItem', position: 3, name: c.title, item: `${siteConfig.url}/categories/${c.id}` },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        name: c.title,
+        numberOfItems: list.length,
+        itemListElement: list.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.title, url: `${siteConfig.url}/templates/${t.slug}` })),
+      },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <Header />
       <main className="container mx-auto px-4 py-12">
         <nav className="text-sm text-gray-500 dark:text-gray-400 mb-6">
@@ -48,7 +70,17 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{list.length} free {list.length === 1 ? 'template' : 'templates'}</p>
           </div>
         </div>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mb-10">{c.description}</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mb-6">{c.description}</p>
+
+        <a
+          href={`/bundles/${c.id}.zip`}
+          download
+          className="inline-flex items-center gap-2 mb-10 px-5 py-3 rounded-xl text-white font-semibold shadow-md hover:opacity-90 transition"
+          style={{ background: siteConfig.brandColor }}
+        >
+          <span className="text-xl">⬇</span>
+          Download all {list.length} {c.title} templates (ZIP)
+        </a>
 
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {list.map((t) => <TemplateCard key={t.slug} t={t} />)}

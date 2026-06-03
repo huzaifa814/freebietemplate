@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: 'FreebieTemplate',
-  tagline: '228+ Free Templates — Resume, Bookkeeping, Invoice, Planner & More',
-  description: '228+ professional templates, completely free. Resumes, bookkeeping spreadsheets, invoices, planners, email signatures. Word, Excel, Google Docs, Google Sheets. No signup. No watermark.',
+  tagline: '400+ Free Templates — Resume, Bookkeeping, Invoice, Planner & More',
+  description: '400+ professional templates, completely free. Resumes, bookkeeping spreadsheets, invoices, planners, budgets, checklists, certificates, email signatures. Word, Excel, Google Docs, Google Sheets. No signup. No watermark.',
   url: 'https://www.freebietemplate.com',
   domain: 'freebietemplate.com',
   email: 'huzaifa@g5networkgroup.com',

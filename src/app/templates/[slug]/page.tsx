@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AdSlot } from '@/components/AdSlot';
+import { JsonLd } from '@/components/JsonLd';
+import { SaveToDriveButton } from '@/components/SaveToDriveButton';
 import { templates, getTemplate, getCategory } from '@/config/templates';
 import { siteConfig } from '@/config/site';
 
@@ -44,9 +46,35 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
   const sameCat = templates.filter((x) => x.category === t.category && x.slug !== t.slug);
   const crossTag = templates.filter((x) => x.category !== t.category && x.slug !== t.slug && x.tags.some((tg) => tagSet.has(tg)));
   const related = [...sameCat, ...crossTag].filter((x, i, arr) => arr.findIndex((y) => y.slug === x.slug) === i).slice(0, 4);
+  const driveFile = t.files.find((f) => !f.href.includes('PLACEHOLDER_') && (f.format === 'xlsx' || f.format === 'docx' || f.format === 'pdf'));
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: siteConfig.url },
+          { '@type': 'ListItem', position: 2, name: 'Templates', item: `${siteConfig.url}/templates` },
+          ...(cat ? [{ '@type': 'ListItem', position: 3, name: cat.title, item: `${siteConfig.url}/categories/${cat.id}` }] : []),
+          { '@type': 'ListItem', position: cat ? 4 : 3, name: t.title, item: `${siteConfig.url}/templates/${t.slug}` },
+        ],
+      },
+      {
+        '@type': 'Product',
+        name: t.title,
+        description: t.description,
+        image: `${siteConfig.url}/previews/${t.slug}.png`,
+        category: cat?.title,
+        brand: { '@type': 'Brand', name: siteConfig.name },
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: `${siteConfig.url}/templates/${t.slug}` },
+      },
+    ],
+  };
 
   return (
     <>
+      <JsonLd data={jsonLd} />
       <Header />
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <nav className="text-sm text-gray-500 dark:text-gray-400 mb-6">
@@ -125,6 +153,17 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
                 </a>
               ))}
             </div>
+
+            {driveFile && (
+              <div className="mb-6 p-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">📁</span>
+                  <span className="font-semibold text-sm">Save to Google Drive</span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Save this file straight to your Drive, then open it with Google {driveFile.format === 'xlsx' ? 'Sheets' : 'Docs'} — no download needed.</p>
+                <SaveToDriveButton src={`${siteConfig.url}${driveFile.href}`} filename={`${t.slug}.${driveFile.format}`} />
+              </div>
+            )}
 
             <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
               {t.features.map((f) => (

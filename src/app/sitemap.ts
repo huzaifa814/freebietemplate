@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
 import { templates, categories } from '@/config/templates';
+import { guides } from '@/config/guides';
 import { COUNTRIES, CAL_STYLES, MONTH_YEARS, FIRST_YEAR, styleYears } from '@/config/calendars';
 import { MONTH_SLUGS } from '@/lib/calendar';
 import { holidayList } from '@/lib/holidays';
@@ -9,7 +10,7 @@ export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const staticPaths = ['', '/templates', '/calendars', '/calendars/blank', '/calendars/weekly-planner', '/categories', '/about', '/faq', '/privacy', '/terms', '/contact'];
+  const staticPaths = ['', '/templates', '/calendars', '/calendars/blank', '/calendars/weekly-planner', '/categories', '/guides', '/about', '/faq', '/privacy', '/terms', '/contact'];
   const entries: MetadataRoute.Sitemap = staticPaths.map((p) => ({
     url: `${siteConfig.url}${p}`,
     lastModified: now,
@@ -21,6 +22,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }
   for (const c of categories) {
     entries.push({ url: `${siteConfig.url}/categories/${c.id}`, lastModified: now, changeFrequency: 'weekly', priority: 0.6 });
+  }
+  for (const g of guides) {
+    entries.push({ url: `${siteConfig.url}/guides/${g.slug}`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 });
   }
   // Calendars: country hub + holiday answer pages + year/style index + month pages
   for (const c of COUNTRIES) {
