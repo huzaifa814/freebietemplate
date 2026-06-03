@@ -1829,6 +1829,69 @@ function renderLetters(ctx, entry) {
   return letFormal(ctx, entry, accent);
 }
 
+// ============================================================
+//  Small business ops previews — distinct layouts
+// ============================================================
+function bizFoot(ctx) { text(ctx, 'FREE  ·  Editable  ·  Word / Excel + Google', W / 2, H - 18, { size: 13, color: MUTED, align: 'center' }); watermark(ctx); }
+function bizDoc(ctx, entry, accent) {
+  paper(ctx);
+  text(ctx, entry.title, 60, 92, { size: 27, weight: '800' });
+  text(ctx, 'Prepared by Hartford & Co.     ·     May 14, 2026', 60, 124, { size: 13, color: MUTED, italic: true });
+  rule(ctx, 60, 146, W - 60, accent[0], 3);
+  const sections = ['EXECUTIVE SUMMARY', 'OBJECTIVES', 'STRATEGY & APPROACH', 'KEY ACTIVITIES', 'TIMELINE & MILESTONES', 'MEASURES OF SUCCESS'];
+  let y = 192;
+  sections.forEach((s, i) => { text(ctx, s, 60, y, { size: 14, weight: '800', color: accent[0] }); y = wrappedText(ctx, pickDoc(entry.slug, i) + ' ' + pickDoc(entry.slug, i + 30), 60, y + 24, W - 120, 18, { size: 12, color: '#374151' }) + 30; });
+  bizFoot(ctx);
+}
+function bizDash(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Key metrics at a glance');
+  kpiRow(ctx, 30, 102, W - 60, [{ label: 'MRR', value: '$48.2k', color: accent[0] }, { label: 'Customers', value: '1,284', color: '#2563eb' }, { label: 'Churn', value: '2.1%', color: '#dc2626' }]);
+  text(ctx, 'Performance vs target', 30, 212, { size: 14, weight: '700' });
+  drawTable(ctx, 30, 224, W - 60, ['Metric', 'Target', 'Actual', 'Status'], [['New MRR', '$8,000', '$9,400', 'Ahead'], ['Churn', '< 3%', '2.1%', 'Good'], ['CAC', '$220', '$198', 'Good'], ['LTV', '$2,400', '$2,610', 'Good'], ['Conversion', '4.0%', '3.6%', 'Behind'], ['NPS', '45', '52', 'Good']], { right: [1, 2], colorFn: (c, i) => i === 3 ? (c === 'Behind' ? '#dc2626' : '#16a34a') : INK, minRows: 7 });
+  const py = 624; rrect(ctx, 30, py, W - 60, 300, 14, '#fff', LINE); text(ctx, 'Revenue split', 56, py + 30, { size: 13, weight: '700' }); donut(ctx, 140, py + 165, 80, [{ label: 'Subscriptions', v: 62, c: accent[0] }, { label: 'Services', v: 24, c: '#2563eb' }, { label: 'Add-ons', v: 14, c: '#f59e0b' }]); text(ctx, 'Growth trend', 480, py + 30, { size: 13, weight: '700' }); bars(ctx, 480, py + 58, 250, 180, [28, 32, 35, 39, 44, 48], accent[0], ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']);
+  bizFoot(ctx);
+}
+function bizTable(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Pipeline & deals');
+  kpiRow(ctx, 30, 102, W - 60, [{ label: 'Open deals', value: '24', color: accent[0] }, { label: 'Pipeline value', value: '$182k', color: '#16a34a' }, { label: 'Win rate', value: '31%', color: '#2563eb' }]);
+  text(ctx, 'Deals', 30, 212, { size: 14, weight: '700' });
+  drawTable(ctx, 30, 224, W - 60, ['Company', 'Stage', 'Owner', 'Value', 'Close'], [['Acme Co', 'Proposal', 'M. Rivera', '$24,000', 'Jun 30'], ['Bright LLC', 'Negotiation', 'A. Chen', '$12,400', 'Jun 22'], ['Nova Group', 'Discovery', 'J. Brooks', '$8,800', 'Jul 15'], ['Pine & Co', 'Won', 'S. Park', '$15,200', 'Jun 10'], ['Vertex', 'Proposal', 'D. Hayes', '$31,000', 'Jul 02'], ['Orbit', 'Discovery', 'R. Stone', '$6,100', 'Jul 20'], ['Lumen', 'Negotiation', 'M. Rivera', '$9,400', 'Jun 28']], { right: [3], minRows: 11 });
+  bizFoot(ctx);
+}
+function bizMatrix(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Four-quadrant analysis');
+  const quads = [['STRENGTHS', '#16a34a'], ['WEAKNESSES', '#dc2626'], ['OPPORTUNITIES', '#2563eb'], ['THREATS', '#f59e0b']];
+  const top = 110, gap = 16, qw = (W - 60 - gap) / 2, qh = (H - top - 70 - gap) / 2;
+  quads.forEach((q, i) => { const x = 30 + (i % 2) * (qw + gap), y = top + Math.floor(i / 2) * (qh + gap); rrect(ctx, x, y, qw, qh, 12, '#ffffff', q[1]); rrect(ctx, x, y, qw, 34, 8, q[1]); text(ctx, q[0], x + 16, y + 23, { size: 13, weight: '800', color: '#fff' }); for (let l = 0; l < 5; l++) { ctx.fillStyle = q[1]; ctx.beginPath(); ctx.arc(x + 24, y + 60 + l * 32, 3.5, 0, Math.PI * 2); ctx.fill(); rule(ctx, x + 38, y + 64 + l * 32, x + qw - 18, '#e5e7eb', 1); } });
+  bizFoot(ctx);
+}
+function bizSurvey(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Please rate each item from 1 (low) to 5 (high)');
+  const qs = ['Overall satisfaction', 'Quality of work / service', 'Communication & responsiveness', 'Value for the price', 'Likelihood to recommend', 'Met expectations'];
+  let y = 138;
+  qs.forEach((q, i) => { text(ctx, `${i + 1}.  ${q}`, 50, y, { size: 13.5, weight: '600' }); for (let r = 0; r < 5; r++) { const cx = W - 250 + r * 46; ctx.beginPath(); ctx.arc(cx, y - 5, 11, 0, Math.PI * 2); if (i % 5 === r) { ctx.fillStyle = accent[2]; ctx.fill(); } ctx.strokeStyle = accent[0]; ctx.lineWidth = 2; ctx.stroke(); text(ctx, String(r + 1), cx, y - 1, { size: 10, color: MUTED, align: 'center' }); } y += 58; });
+  y += 8; rule(ctx, 50, y, W - 50, '#e5e7eb', 1); y += 26; text(ctx, 'Additional comments', 50, y, { size: 13, weight: '800', color: accent[0] }); ruledLines(ctx, 50, y + 26, W - 100, 5, 30);
+  bizFoot(ctx);
+}
+function bizCanvas(ctx, entry, accent) {
+  paper(ctx); plHead(ctx, entry, accent, 'Your whole plan on one page');
+  const cells = ['Problem', 'Solution', 'Unique Value', 'Customer Segments', 'Channels', 'Revenue Streams', 'Cost Structure', 'Key Metrics', 'Unfair Advantage'];
+  const gap = 14, cw = (W - 60 - gap * 2) / 3, top = 110, ch = (H - top - 70 - gap * 2) / 3;
+  cells.forEach((c, i) => { const x = 30 + (i % 3) * (cw + gap), y = top + Math.floor(i / 3) * (ch + gap); rrect(ctx, x, y, cw, ch, 10, '#fff', LINE); rrect(ctx, x, y, cw, 28, 8, accent[3]); text(ctx, c, x + 12, y + 19, { size: 11.5, weight: '800', color: accent[0] }); ruledLines(ctx, x + 12, y + 50, cw - 24, 3, 24); });
+  bizFoot(ctx);
+}
+const BIZ_ROUND = [bizDoc, bizDash, bizTable, bizCanvas];
+const BIZ_ORDER = entries.filter((e) => e.category === 'business').map((e) => e.slug);
+function renderBusiness(ctx, entry) {
+  const s = entry.slug, idx = Math.max(0, BIZ_ORDER.indexOf(s)), accent = BK_ACCENTS[(idx * 3 + 6) % BK_ACCENTS.length];
+  if (/swot|risk-assessment|competitor-analysis/.test(s)) return bizMatrix(ctx, entry, accent);
+  if (/survey|feedback|nps|review|one-on-one|exit-interview|meeting-agenda|onboarding/.test(s)) return bizSurvey(ctx, entry, accent);
+  if (/calculator|saas-metrics|acquisition|funnel|okr|kpi|dashboard|break-even|margin|roi|marketing-budget/.test(s)) return bizDash(ctx, entry, accent);
+  if (/tracker|pipeline|lead|commission|vendor-comparison/.test(s)) return bizTable(ctx, entry, accent);
+  if (/canvas|persona|value-prop/.test(s)) return bizCanvas(ctx, entry, accent);
+  return bizDoc(ctx, entry, accent);
+}
+
 // ---- Dispatcher ----
 
 function render(entry) {
@@ -1846,9 +1909,7 @@ function render(entry) {
     renderPlanner(ctx, entry);
   } else if (entry.category === 'letters') renderLetters(ctx, entry);
   else if (entry.category === 'business') {
-    if (/calculator|tracker|pipeline|metric|funnel|matrix|okr/i.test(entry.slug)) {
-      renderSpreadsheet(ctx, entry, { headers: ['Item', 'Owner', 'Value', 'Status', 'Notes'] });
-    } else renderBusinessDoc(ctx, entry);
+    renderBusiness(ctx, entry);
   } else if (entry.category === 'education') {
     if (entry.slug === 'gradebook' || entry.slug === 'attendance-tracker' || entry.slug === 'iep-tracker' || entry.slug === 'exam-study-schedule') {
       renderSpreadsheet(ctx, entry, { headers: ['Student', 'HW1', 'Quiz1', 'Midterm', 'Average'] });
