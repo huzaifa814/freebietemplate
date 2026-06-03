@@ -19,7 +19,7 @@ const BRAND = '#f59e0b', INK = '#1f2937', MUTED = '#6b7280';
 // ---- Parse catalog + content configs ----
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const templatesSrc = read('src/config/templates.ts');
-const tplRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social)',/g;
+const tplRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social|wallart)',/g;
 const templates = [...templatesSrc.matchAll(tplRe)].map((m) => ({ slug: m[1], title: m[2], desc: m[3], category: m[4] }));
 
 const catRe = /\{ id: '([a-z]+)', title: '([^']+)', description: '([^']+)'/g;
