@@ -39,7 +39,11 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
   const t = getTemplate(slug);
   if (!t) return notFound();
   const cat = getCategory(t.category);
-  const related = templates.filter((x) => x.category === t.category && x.slug !== t.slug).slice(0, 3);
+  // Related: same-category first, then fill with tag matches from other categories.
+  const tagSet = new Set(t.tags);
+  const sameCat = templates.filter((x) => x.category === t.category && x.slug !== t.slug);
+  const crossTag = templates.filter((x) => x.category !== t.category && x.slug !== t.slug && x.tags.some((tg) => tagSet.has(tg)));
+  const related = [...sameCat, ...crossTag].filter((x, i, arr) => arr.findIndex((y) => y.slug === x.slug) === i).slice(0, 4);
 
   return (
     <>
@@ -149,8 +153,8 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
 
         {related.length > 0 && (
           <section className="mt-12 pt-10 border-t border-gray-200 dark:border-slate-800">
-            <h2 className="text-2xl font-bold mb-6">More {cat?.title}</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <h2 className="text-2xl font-bold mb-6">You might also like</h2>
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
               {related.map((r) => (
                 <Link key={r.slug} href={`/templates/${r.slug}`} className="group rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-amber-500 hover:shadow-md transition overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
