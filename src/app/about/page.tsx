@@ -2,7 +2,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { siteConfig } from '@/config/site';
 
-export const metadata = { title: 'About', description: `About ${siteConfig.name} — free professional templates that Etsy sellers charge $10+ for.` };
+export const metadata = { title: 'About', description: `About ${siteConfig.name} — free professional templates for work, home, and school. No signup, no watermark.` };
 
 export default function About() {
   return (
@@ -11,10 +11,10 @@ export default function About() {
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-4xl font-bold mb-6">About {siteConfig.name}</h1>
         <div className="prose dark:prose-invert max-w-none space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
-          <p>{siteConfig.name} is a free, ad-supported library of professional templates: resumes, bookkeeping spreadsheets, invoices, budgets, and planners. Every template here is the kind of thing you would normally pay $7–$18 for on Etsy.</p>
+          <p>{siteConfig.name} is a free, ad-supported library of professional templates: resumes, bookkeeping spreadsheets, invoices, budgets, and planners. Every template here is the kind of thing that&apos;s usually locked behind a paywall — here it&apos;s completely free.</p>
 
           <h2 className="text-2xl font-bold mt-8 mb-3">Why build a free version?</h2>
-          <p>Etsy template shops are a $400M+ market. The product is usually great, but the pricing is built on the fact that people don&apos;t have time to make their own. We have time and an opinion about what a good template should look like — so we made our own, and we&apos;re giving them away.</p>
+          <p>Premium template shops are a big business. The products are usually great, but the pricing is built on the fact that people don&apos;t have time to make their own. We have time and an opinion about what a good template should look like — so we made our own, and we&apos;re giving them away.</p>
 
           <h2 className="text-2xl font-bold mt-8 mb-3">How are we paid?</h2>
           <p>A single banner ad on the template detail page. That&apos;s it. No subscriptions, no Pro tier, no email collection, no &quot;sign up to download.&quot; If ad-blockers cost us a few dollars, that&apos;s fine — the templates still load and you still get them.</p>

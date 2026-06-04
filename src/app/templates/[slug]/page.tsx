@@ -119,7 +119,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
             </div>
 
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm font-medium mb-6">
-              💰 Free — sells for {t.etsyPrice} on Etsy
+              💯 100% Free — no signup, no watermark
             </div>
 
             {editorTypeFor(t.slug) && (

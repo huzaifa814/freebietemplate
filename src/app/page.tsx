@@ -13,10 +13,10 @@ export default function HomePage() {
       <main>
         <section className="container mx-auto px-4 py-16 md:py-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-medium mb-6">
-            ⚡ Free · No Signup · The $10 Etsy templates, free
+            ⚡ 100% Free · No Signup · No Watermark
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 max-w-3xl mx-auto leading-tight">
-            Free <span style={{ color: siteConfig.brandColor }}>Templates</span> Etsy Charges $10+ For
+            Free <span style={{ color: siteConfig.brandColor }}>Templates</span> — Premium Quality, Zero Cost
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
             Resumes, bookkeeping spreadsheets, invoices, budgets, planners. Word, Excel, Google Docs, Google Sheets. Click <em>Make a Copy</em> and they&apos;re yours. No signup, no watermark.
@@ -30,7 +30,7 @@ export default function HomePage() {
         <section className="container mx-auto px-4 py-12">
           <div className="grid gap-6 md:grid-cols-3 mb-12">
             {[
-              { icon: '💸', title: '$0, not $10', body: 'Same quality as the Etsy bestsellers — without the price. Download the .docx/.xlsx or copy directly into Google Docs/Sheets.' },
+              { icon: '💸', title: 'Always 100% Free', body: 'Premium-quality templates at no cost — ever. Download the .docx/.xlsx or copy directly into Google Docs/Sheets.' },
               { icon: '🤖', title: 'ATS-Friendly Resumes', body: 'Resume designs tested in real applicant-tracking systems. No fancy graphics that get stripped. Just clean structure recruiters can read.' },
               { icon: '🔓', title: 'No Signup', body: 'No email collection, no account, no "sign up to download." Click the link, the template is yours.' },
             ].map((f) => (
@@ -68,7 +68,7 @@ export default function HomePage() {
 
         <section className="container mx-auto px-4 py-16 text-center">
           <div className="p-10 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">Why is this free when Etsy sellers charge $10+?</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">Why is this completely free?</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-xl mx-auto">A small banner ad pays the hosting bill. That&apos;s the whole business model. No upsells, no Pro tier, no &quot;sign up to download.&quot;</p>
             <Link href="/about" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90 transition" style={{ background: siteConfig.brandColor }}>Read the story →</Link>
           </div>
