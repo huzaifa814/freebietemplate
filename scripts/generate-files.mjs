@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import ExcelJS from 'exceljs';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { createCanvas } from '@napi-rs/canvas';
+import { drawPoster, POSTER_TEXT } from './_poster.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -18,7 +20,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 // Extract { slug, helper, category } triples from the catalog source.
 const catalogSrc = fs.readFileSync(path.join(root, 'src/config/templates.ts'), 'utf8');
-const entryRe = /t\('([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social)',[\s\S]*?(xlsxFiles|docxFiles|pdfFiles|emailSigFiles)\(/g;
+const entryRe = /t\('([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social|wallart)',[\s\S]*?(xlsxFiles|docxFiles|pdfFiles|emailSigFiles)\(/g;
 const entries = [];
 for (const m of catalogSrc.matchAll(entryRe)) {
   entries.push({ slug: m[1], title: m[2], category: m[3], helper: m[4] });
@@ -750,7 +752,22 @@ ${disclaimer}
 
 // ─────────── PDF GENERATOR ───────────
 
+async function buildWallArtPdf(entry) {
+  // Render the poster at print resolution and embed it as a full-page image so
+  // the download matches the on-site preview exactly.
+  const PW = 1600, PH = 2070; // US-Letter ratio, high-res
+  const canvas = createCanvas(PW, PH);
+  drawPoster(canvas.getContext('2d'), PW, PH, POSTER_TEXT[entry.slug] || { big: [entry.title], style: 'serif', accent: '#f59e0b' });
+  const png = await canvas.encode('png');
+  const pdf = await PDFDocument.create();
+  const img = await pdf.embedPng(png);
+  const page = pdf.addPage([612, 792]);
+  page.drawImage(img, { x: 0, y: 0, width: 612, height: 792 });
+  fs.writeFileSync(path.join(outDir, `${entry.slug}.pdf`), await pdf.save());
+}
+
 async function buildPdf(entry) {
+  if (entry.category === 'wallart') return buildWallArtPdf(entry);
   const pdf = await PDFDocument.create();
   const helv = await pdf.embedFont(StandardFonts.Helvetica);
   const helvBold = await pdf.embedFont(StandardFonts.HelveticaBold);

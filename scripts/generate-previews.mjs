@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createCanvas } from '@napi-rs/canvas';
+import { drawPoster, POSTER_TEXT } from './_poster.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -25,7 +26,7 @@ const SOFT = '#f9fafb';
 
 // ---- Catalog ----
 const catalogSrc = fs.readFileSync(path.join(root, 'src/config/templates.ts'), 'utf8');
-const entryRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social)',/g;
+const entryRe = /t\('([^']+)',\s*'([^']+)',\s*'([^']+)',[\s\S]*?,\s*'(resume|bookkeeping|invoice|planner|letters|business|education|email|checklist|finance|wedding|health|kids|certificate|social|wallart)',/g;
 const entries = [];
 for (const m of catalogSrc.matchAll(entryRe)) {
   entries.push({ slug: m[1], title: m[2], description: m[3], category: m[4] });
@@ -2165,6 +2166,7 @@ function render(entry) {
   else if (entry.category === 'kids') renderKids(ctx, entry);
   else if (entry.category === 'certificate') renderCertificate(ctx, entry);
   else if (entry.category === 'social') renderSocial(ctx, entry);
+  else if (entry.category === 'wallart') drawPoster(ctx, W, H, POSTER_TEXT[entry.slug] || { big: [entry.title], style: 'serif', accent: BRAND });
   else renderBusinessDoc(ctx, entry);
 
   return canvas.encode('png');
