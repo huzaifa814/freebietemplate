@@ -16,7 +16,7 @@ export function TemplateCard({ t }: { t: Template }) {
           loading="lazy"
         />
         <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full bg-white/95 backdrop-blur text-amber-700 font-semibold shadow-sm">
-          Free · Etsy {t.etsyPrice}
+          FREE
         </div>
       </div>
       <div className="p-4 flex-1">

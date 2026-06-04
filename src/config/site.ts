@@ -18,7 +18,7 @@ export const siteConfig = {
     'free resume template', 'free bookkeeping template', 'free invoice template',
     'free budget template', 'free planner template', 'free excel template',
     'free word template', 'google docs resume template', 'google sheets bookkeeping',
-    'small business spreadsheet', 'free download templates', 'etsy alternative templates',
+    'small business spreadsheet', 'free download templates', 'free printable templates',
   ],
 };
 
