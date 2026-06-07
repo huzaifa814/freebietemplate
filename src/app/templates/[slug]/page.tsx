@@ -70,7 +70,32 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
         image: `${siteConfig.url}/previews/${t.slug}.png`,
         category: cat?.title,
         brand: { '@type': 'Brand', name: siteConfig.name },
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: `${siteConfig.url}/templates/${t.slug}` },
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          availability: 'https://schema.org/InStock',
+          url: `${siteConfig.url}/templates/${t.slug}`,
+          priceValidUntil: '2099-12-31',
+          // Free digital download: no returns, no shipping. Declared so Google
+          // stops flagging the Merchant-listings fields. Reviews/ratings are
+          // intentionally omitted — there is no real review system to mark up.
+          hasMerchantReturnPolicy: {
+            '@type': 'MerchantReturnPolicy',
+            applicableCountry: 'US',
+            returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+          },
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'USD' },
+            shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'US' },
+            deliveryTime: {
+              '@type': 'ShippingDeliveryTime',
+              handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 0, unitCode: 'DAY' },
+              transitTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 0, unitCode: 'DAY' },
+            },
+          },
+        },
       },
     ],
   };
